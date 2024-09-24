@@ -1,16 +1,14 @@
 import os
 import tempfile
-from typing import List, Dict
 
-from dotenv import load_dotenv
 from pydantic import BaseModel
 from telegram import (
+    KeyboardButton,
+    ReplyKeyboardMarkup,
     Update,
     User,
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    ChatAction,
 )
+from telegram.constants import ChatAction
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -24,11 +22,9 @@ from llms.openai import call_openai
 from llms.prompt import EXAM_BOT_PROMPT
 from tools.form_recognizer import analyze_image
 
-load_dotenv()
-
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
-db = DB('interactions.csv')
+db = DB("interactions.csv")
 
 
 class Message(BaseModel):
@@ -42,10 +38,12 @@ async def start_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Define the keyboard options
     keyboard = [
-        [KeyboardButton('1'), KeyboardButton('2')],
-        [KeyboardButton('3'), KeyboardButton('4')]
+        [KeyboardButton("1"), KeyboardButton("2")],
+        [KeyboardButton("3"), KeyboardButton("4")],
     ]
-    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
+    reply_markup = ReplyKeyboardMarkup(
+        keyboard, one_time_keyboard=False, resize_keyboard=True
+    )
 
     await update.message.reply_text(bot_response, reply_markup=reply_markup)
 
@@ -64,17 +62,12 @@ async def echo(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     history = [Message(**msg_dict) for msg_dict in history_records]
 
     # Append the current user message to history
-    history.append(Message(role='user', content=user_message))
+    history.append(Message(role="user", content=user_message))
 
     # Prepare history for OpenAI API
-    api_history = [{'role': msg.role, 'content': msg.content} for msg in history]
+    api_history = [{"role": msg.role, "content": msg.content} for msg in history]
 
-    bot_response: str = call_openai(
-        api_history,
-        user,
-        user_message,
-        EXAM_BOT_PROMPT
-    )
+    bot_response: str = call_openai(api_history, user, user_message, EXAM_BOT_PROMPT)
 
     # Log the interaction
     db._log_interaction(user, user_message, bot_response)
@@ -105,17 +98,12 @@ async def handle_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         history = [Message(**msg_dict) for msg_dict in history_records]
 
         # Append the extracted text as current user message to history
-        history.append(Message(role='user', content=extracted_text))
+        history.append(Message(role="user", content=extracted_text))
 
         # Prepare history for OpenAI API
-        api_history = [{'role': msg.role, 'content': msg.content} for msg in history]
+        api_history = [{"role": msg.role, "content": msg.content} for msg in history]
 
-        bot_response = call_openai(
-            api_history,
-            user,
-            extracted_text,
-            EXAM_BOT_PROMPT
-        )
+        bot_response = call_openai(api_history, user, extracted_text, EXAM_BOT_PROMPT)
 
         # Log the interaction
         db._log_interaction(user, extracted_text, bot_response)
