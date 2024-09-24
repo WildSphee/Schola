@@ -15,9 +15,9 @@ class Interaction(BaseModel):
     bot_response: str
 
 
-class DB:
-    def init(self, csv_file: str):
-        self.CSV_FILE: str = csv_file
+class DB(BaseModel):
+    
+    CSV_FILE: str
 
     def _log_interaction(
         self, user: User, user_message: str, bot_response: str
