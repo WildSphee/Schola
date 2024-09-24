@@ -1,0 +1,12 @@
+__pycache__
+.env
+
+# environment
+.venv/
+venv
+
+# outputs
+output/
+
+# testing folder
+testing/
