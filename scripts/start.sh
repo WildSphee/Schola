@@ -10,4 +10,4 @@ fi
 export $(grep -v '^#' .env | xargs)
 
 # Start the server using python3
-python3 app.py
+python app.py
