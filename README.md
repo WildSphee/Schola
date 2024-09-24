@@ -97,7 +97,6 @@ schola/
 - **Python 3.10+**
 - **openai**: ^1.47.1
 - **requests**: ^2.32.3
-- **python-dotenv**: ^1.0.1
 - **python-telegram-bot**: ^21.6
 
 ## Contact
