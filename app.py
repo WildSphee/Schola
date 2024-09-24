@@ -24,7 +24,7 @@ from tools.form_recognizer import analyze_image
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
-db = DB("interactions.csv")
+db = DB(CSV_FILE="db/interactions.csv")
 
 
 class Message(BaseModel):

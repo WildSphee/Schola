@@ -16,7 +16,6 @@ class Interaction(BaseModel):
 
 
 class DB(BaseModel):
-    
     CSV_FILE: str
 
     def _log_interaction(
@@ -26,7 +25,7 @@ class DB(BaseModel):
             user_id=str(user.id),
             username=user.username,
             first_name=user.first_name,
-            last_name=user.last_name,
+            last_name=str(user.last_name),
             user_message=user_message,
             bot_response=bot_response,
         )

@@ -17,7 +17,9 @@ def call_openai(
         {
             "role": "system",
             "content": prompt.format(
-                username=user.first_name or "<not provided>", query=query
+                username=user.first_name or "<not provided>",
+                query=query,
+                course_name="GENERAL",
             ),
         },
     ]
