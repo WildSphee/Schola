@@ -1,4 +1,3 @@
-import os
 from typing import Dict, List
 
 from dotenv import load_dotenv
@@ -7,9 +6,6 @@ from telegram import User
 
 # Load environment variables from a .env file
 load_dotenv()
-
-os.environ["OPENAI_API_KEY"] = ""
-print(f'API KEY DEBUG PRINT: {os.getenv("OPENAI_API_KEY")}')
 
 
 def call_openai(
