@@ -25,13 +25,12 @@ git clone https://github.com/yourusername/schola.git
 cd schola
 ```
 
-### Set Up the Environment
-
 #### Install Dependencies
 
 Use Poetry to install all dependencies:
 
 ```bash
+pip install poetry
 poetry install
 ```
 
@@ -42,18 +41,28 @@ This command will create a virtual environment and install all required packages
 Create a `.env` file in the root directory to store your environment variables:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-```
+OPENAI_API_KEY=<your openai api key>
+TELEGRAM_BOT_TOKEN=<your telegram bot token>
 
-Replace `your_openai_api_key` and `your_telegram_bot_token` with your actual keys.
+# Azure Form Recognizer
+AZURE_FORM_RECOGNIZER_KEY=<your form recognizer key>
+AZURE_FORM_RECOGNIZER_ENDPOINT=<your form recognizer endpoint, starting with https>
+
+# Replicate Image Generation
+REPLICATE_API_TOKEN=<your replicate api token for image generation>
+
+# Database File Name
+DATABASE_NAME=database
+
+```
+Replace the environment variables with your actual keys.
 
 ## Running the Bot
 
 Start the Telegram bot with:
 
 ```bash
-poetry run python bot.py
+sh scripts/start.sh
 ```
 
 ## Development
@@ -92,12 +101,6 @@ schola/
 
 - **Linting**: `sh scripts/lint.sh` - Runs code linting and type checks.
 
-## Dependencies
-
-- **Python 3.10+**
-- **openai**: ^1.47.1
-- **requests**: ^2.32.3
-- **python-telegram-bot**: ^21.6
 
 ## Contact
 
@@ -106,7 +109,7 @@ Email: [rrr.chanhiulok@gmail.com](mailto:rrr.chanhiulok@gmail.com)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Private License
 
 ## Acknowledgments
 
