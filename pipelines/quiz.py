@@ -73,7 +73,6 @@ async def quiz_get_question(update: Update, context: CallbackContext):
         correct_option = quiz_data["correct_option"]
         explanation = quiz_data["explanation"]
     except (json.JSONDecodeError, KeyError) as e:
-        print(e)
         await update.message.reply_text(
             "Sorry, there was an error generating the quiz question. Please try again.",
             reply_markup=ReplyKeyboardMarkup(

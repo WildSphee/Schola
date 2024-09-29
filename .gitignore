@@ -8,8 +8,8 @@ venv
 # outputs
 output/
 
-# testing folder
-testing/
+# testing scripts
+testing.py
 
 # db
 database.db
