@@ -1,9 +1,11 @@
-import os
+import sqlite3
+from datetime import datetime
 from typing import Dict, List
 
-import pandas as pd
 from pydantic import BaseModel
 from telegram import User
+
+DATABASE_FILE = "interactions.db"
 
 
 class Interaction(BaseModel):
@@ -13,57 +15,91 @@ class Interaction(BaseModel):
     last_name: str
     user_message: str
     bot_response: str
+    timestamp: datetime
+
+    class Config:
+        orm_mode = True
 
 
-class DB(BaseModel):
-    CSV_FILE: str
+class DB:
+    def __init__(self):
+        self.conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+        self._create_table()
 
-    def _log_interaction(
-        self, user: User, user_message: str, bot_response: str
-    ) -> None:
-        interaction = Interaction(
-            user_id=str(user.id),
-            username=user.username,
-            first_name=user.first_name,
-            last_name=str(user.last_name),
-            user_message=user_message,
-            bot_response=bot_response,
+    def _create_table(self):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                username TEXT,
+                first_name TEXT,
+                last_name TEXT,
+                user_message TEXT,
+                bot_response TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
         )
-        df_new = pd.DataFrame([interaction.model_dump()])
+        self.conn.commit()
 
-        if os.path.isfile(self.CSV_FILE):
-            df_new.to_csv(self.CSV_FILE, mode="a", header=False, index=False)
-        else:
-            df_new.to_csv(self.CSV_FILE, mode="w", header=True, index=False)
+    def log_interaction(self, user: User, user_message: str, bot_response: str) -> None:
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO interactions (
+                    user_id, username, first_name, last_name,
+                    user_message, bot_response, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    str(user.id),
+                    user.username or "",
+                    user.first_name or "",
+                    user.last_name or "",
+                    user_message,
+                    bot_response,
+                    datetime.utcnow(),
+                ),
+            )
 
-    def _get_chat_history(self, user_id: str) -> List[Dict[str, str]]:
-        if not os.path.isfile(self.CSV_FILE):
-            return []
-
-        df = pd.read_csv(self.CSV_FILE)
-        df["user_id"] = df["user_id"].astype(str)
-        user_history = df[df["user_id"] == str(user_id)]
-
-        his = []
-        for _, row in user_history.iterrows():
-            his.append({"role": "user", "content": row["user_message"] or ""})
-            his.append({"role": "assistant", "content": row["bot_response"] or ""})
-
-        return his
+    def get_chat_history(self, user_id: str) -> List[Dict[str, str]]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT user_message, bot_response FROM interactions
+            WHERE user_id = ?
+            ORDER BY id ASC
+            """,
+            (user_id,),
+        )
+        rows = cursor.fetchall()
+        history = []
+        for user_message, bot_response in rows:
+            history.append({"role": "user", "content": user_message or ""})
+            history.append({"role": "assistant", "content": bot_response or ""})
+        return history
 
     def _clear_chat_history(self, user: User) -> None:
-        if not os.path.isfile(self.CSV_FILE):
-            return
+        with self.conn:
+            self.conn.execute(
+                """
+                DELETE FROM interactions WHERE user_id = ?
+                """,
+                (str(user.id),),
+            )
 
-        df = pd.read_csv(self.CSV_FILE)
-        df["user_id"] = df["user_id"].astype(str)
-        df.loc[df["user_id"] == str(user.id), "user_id"] = f"cleared_{user.id}"
-        df.to_csv(self.CSV_FILE, index=False)
+    def check_user_messages(self, user: User) -> int:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT COUNT(*) FROM interactions WHERE user_id = ?
+            """,
+            (str(user.id),),
+        )
+        count = cursor.fetchone()[0]
+        return count
 
-    def _check_user_messages(self, user: User) -> int:
-        if not os.path.isfile(self.CSV_FILE):
-            return 0
-
-        df = pd.read_csv(self.CSV_FILE)
-        filtered_df = df[df["user_id"] == str(user.id)]
-        return filtered_df.shape[0]
+    def close(self):
+        self.conn.close()
