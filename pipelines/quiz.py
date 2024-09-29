@@ -57,12 +57,9 @@ async def quiz_get_question(update: Update, context: CallbackContext):
     # Randomly select a subject
     subject = random.choice(subjects)
 
-    # Generate the system prompt
     prompt = system_prompt.format(subject=subject)
-
-    # Call the LLM to generate the question
     bot_response = call_openai([], user, prompt)
-
+    print(bot_response)
     # Parse the JSON response
     try:
         quiz_data = json.loads(bot_response)
@@ -70,7 +67,8 @@ async def quiz_get_question(update: Update, context: CallbackContext):
         options = quiz_data["options"]
         correct_option = quiz_data["correct_option"]
         explanation = quiz_data["explanation"]
-    except (json.JSONDecodeError, KeyError):
+    except (json.JSONDecodeError, KeyError) as e:
+        print(e)
         await update.message.reply_text(
             "Sorry, there was an error generating the quiz question. Please try again.",
             reply_markup=ReplyKeyboardMarkup(
