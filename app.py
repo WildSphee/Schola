@@ -24,8 +24,6 @@ def main() -> None:
 
     application = ApplicationBuilder().token(TOKEN).build()
 
-    # Initialize the database (ensure it's a singleton if necessary)
-
     # Add handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(quiz_conversation_handler)
