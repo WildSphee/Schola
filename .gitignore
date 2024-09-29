@@ -12,4 +12,5 @@ output/
 testing/
 
 # db
-interactions.db
+database.db
+default.db
