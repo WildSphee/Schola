@@ -16,8 +16,8 @@ from llms.prompt import system_prompt
 from pipelines.db import db
 from pipelines.utils import send_main_menu
 
-# Conversation states for the quiz
-QUIZ_START, QUIZ_QUESTION = range(2)
+# Conversation state for the quiz
+QUIZ_QUESTION = 0
 
 
 async def quiz_start(update: Update, context: CallbackContext):
@@ -39,26 +39,25 @@ async def quiz_start(update: Update, context: CallbackContext):
     # Store subjects in context for later use
     context.user_data["subjects"] = subjects
 
-    # Move to the next state to get a question
-    return await quiz_get_question(update, context)
+    await quiz_get_question(update, context)
+
+    return QUIZ_QUESTION
 
 
 async def quiz_get_question(update: Update, context: CallbackContext):
     """Generate and present a quiz question to the user."""
     user = update.message.from_user
-    user_id = str(user.id)
     subjects = context.user_data.get("subjects")
-
-    if not subjects:
-        subjects = db.get_user_subjects(user_id)
-        context.user_data["subjects"] = subjects
 
     # Randomly select a subject
     subject = random.choice(subjects)
 
     prompt = system_prompt.format(subject=subject)
     bot_response = call_openai([], user, prompt)
-    code_fence_pattern = r"^```(?:json)?\n([\s\S]*?)\n```$"
+
+    # Remove any code fences from the response
+    bot_response = bot_response.strip()
+    code_fence_pattern = r"^```(?:json)?\s*([\s\S]*?)\s*```$"
     match = re.match(code_fence_pattern, bot_response)
     if match:
         bot_response = match.group(1).strip()
@@ -70,9 +69,10 @@ async def quiz_get_question(update: Update, context: CallbackContext):
         quiz_data = json.loads(bot_response)
         question = quiz_data["question"]
         options = quiz_data["options"]
-        correct_option = quiz_data["correct_option"]
+        correct_option = quiz_data["correct_option"].upper()
         explanation = quiz_data["explanation"]
-    except (json.JSONDecodeError, KeyError) as e:
+    except (json.JSONDecodeError, KeyError, AttributeError) as e:
+        print(e)
         await update.message.reply_text(
             "Sorry, there was an error generating the quiz question. Please try again.",
             reply_markup=ReplyKeyboardMarkup(
@@ -82,10 +82,10 @@ async def quiz_get_question(update: Update, context: CallbackContext):
         return ConversationHandler.END
 
     # Save the correct answer and explanation in user_data
-    context.user_data["correct_option"] = correct_option.upper()
+    context.user_data["correct_option"] = correct_option
     context.user_data["explanation"] = explanation
 
-    # Present the question and options to the user
+    # display question & options to the user
     options_text = "\n".join([f"{key}: {value}" for key, value in options.items()])
     message = f"Here's your question from {subject}:\n\n{question}\n\n{options_text}\n\nPlease select A, B, C, or D."
     await update.message.reply_text(
@@ -97,19 +97,18 @@ async def quiz_get_question(update: Update, context: CallbackContext):
         ),
     )
 
-    return QUIZ_QUESTION
-
 
 async def quiz_check_answer(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
-    print(update.message.text)
     user_answer = update.message.text.strip().upper()
     valid_options = ["A", "B", "C", "D"]
 
-    if user_answer == "Next Question":
-        return await quiz_get_question(update, context)
+    if user_answer == "NEXT QUESTION":
+        # Generate and send the next question
+        await quiz_get_question(update, context)
+        return QUIZ_QUESTION
 
-    if user_answer == "Back to Main Menu":
+    if user_answer == "BACK TO MAIN MENU":
         await send_main_menu(update)
         return ConversationHandler.END
 
@@ -124,6 +123,7 @@ async def quiz_check_answer(update: Update, context: CallbackContext):
         )
         return QUIZ_QUESTION
 
+    # Retrieve the correct answer and explanation
     correct_option = context.user_data.get("correct_option")
     explanation = context.user_data.get("explanation")
 
@@ -150,7 +150,7 @@ async def quiz_check_answer(update: Update, context: CallbackContext):
             ),
         )
 
-    return QUIZ_START
+    return QUIZ_QUESTION
 
 
 async def stop_quiz(update: Update, context: CallbackContext):
@@ -165,9 +165,6 @@ async def stop_quiz(update: Update, context: CallbackContext):
 quiz_conversation_handler = ConversationHandler(
     entry_points=[MessageHandler(filters.Regex("^Quiz$"), quiz_start)],
     states={
-        QUIZ_START: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, quiz_get_question)
-        ],
         QUIZ_QUESTION: [
             MessageHandler(filters.TEXT & ~filters.COMMAND, quiz_check_answer)
         ],
