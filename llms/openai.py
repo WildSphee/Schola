@@ -1,14 +1,23 @@
 from typing import Dict, List
 
 from openai import OpenAI
-from telegram import User
 
 
 def call_openai(
     history: List[Dict[str, str]],
-    user: User,
     query: str,
 ) -> str:
+    """
+    Call the OpenAI API to generate a response based on chat history and a user query.
+
+    Args:
+        history (List[Dict[str, str]]): The conversation history.
+        query (str): The user's query.
+
+    Returns:
+        str: The generated response from OpenAI.
+    """
+
     client = OpenAI()
 
     messages = history + [
