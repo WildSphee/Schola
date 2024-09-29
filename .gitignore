@@ -10,3 +10,6 @@ output/
 
 # testing folder
 testing/
+
+# db
+interactions.db

@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from datetime import datetime
 from typing import Dict, List
@@ -5,7 +6,7 @@ from typing import Dict, List
 from pydantic import BaseModel
 from telegram import User
 
-DATABASE_FILE = "interactions.db"
+DATABASE_FILE = f"{os.getenv('DATABASE_NAME') or 'default'}.db"
 
 
 class Interaction(BaseModel):
@@ -24,9 +25,9 @@ class Interaction(BaseModel):
 class DB:
     def __init__(self):
         self.conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
-        self._create_table()
+        self._create_tables()
 
-    def _create_table(self):
+    def _create_tables(self):
         cursor = self.conn.cursor()
         cursor.execute(
             """
@@ -39,6 +40,15 @@ class DB:
                 user_message TEXT,
                 bot_response TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_states (
+                user_id TEXT PRIMARY KEY,
+                pipeline TEXT,
+                last_interaction DATETIME DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
@@ -60,7 +70,7 @@ class DB:
                     user.last_name or "",
                     user_message,
                     bot_response,
-                    datetime.utcnow(),
+                    datetime.now(),
                 ),
             )
 
@@ -81,7 +91,7 @@ class DB:
             history.append({"role": "assistant", "content": bot_response or ""})
         return history
 
-    def _clear_chat_history(self, user: User) -> None:
+    def clear_chat_history(self, user: User) -> None:
         with self.conn:
             self.conn.execute(
                 """
@@ -100,6 +110,29 @@ class DB:
         )
         count = cursor.fetchone()[0]
         return count
+
+    # user pipeline management
+    def set_user_pipeline(self, user_id: str, pipeline: str) -> None:
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO user_states (user_id, pipeline, last_interaction)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET pipeline=excluded.pipeline, last_interaction=excluded.last_interaction
+                """,
+                (user_id, pipeline, datetime.utcnow()),
+            )
+
+    def get_user_pipeline(self, user_id: str) -> str:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT pipeline FROM user_states WHERE user_id = ?
+            """,
+            (user_id,),
+        )
+        result = cursor.fetchone()
+        return result[0] if result else None
 
     def close(self):
         self.conn.close()
