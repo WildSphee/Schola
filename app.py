@@ -54,14 +54,12 @@ async def echo(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     user_message: str = update.message.text
 
     # Retrieve chat history
-    history_records = db._get_chat_history(str(user.id))
+    history_records = db.get_chat_history(str(user.id))
     # Get the last 4 messages (2 user-assistant exchanges)
     history_records = history_records[-4:]
 
     # Convert history_records to list of Message objects
     history = [Message(**msg_dict) for msg_dict in history_records]
-
-    # Append the current user message to history
     history.append(Message(role="user", content=user_message))
 
     # Prepare history for OpenAI API
@@ -69,8 +67,7 @@ async def echo(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
 
     bot_response: str = call_openai(api_history, user, user_message, EXAM_BOT_PROMPT)
 
-    # Log the interaction
-    db._log_interaction(user, user_message, bot_response)
+    db.log_interaction(user, user_message, bot_response)
 
     await update.message.reply_text(bot_response)
 
@@ -90,23 +87,18 @@ async def handle_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         extracted_text = analyze_image(file_path)
 
         # Retrieve chat history
-        history_records = db._get_chat_history(str(user.id))
+        history_records = db.get_chat_history(str(user.id))
         # Get the last 4 messages (2 user-assistant exchanges)
         history_records = history_records[-4:]
 
         # Convert history_records to list of Message objects
         history = [Message(**msg_dict) for msg_dict in history_records]
-
-        # Append the extracted text as current user message to history
         history.append(Message(role="user", content=extracted_text))
 
-        # Prepare history for OpenAI API
         api_history = [{"role": msg.role, "content": msg.content} for msg in history]
-
         bot_response = call_openai(api_history, user, extracted_text, EXAM_BOT_PROMPT)
 
-        # Log the interaction
-        db._log_interaction(user, extracted_text, bot_response)
+        db.log_interaction(user, extracted_text, bot_response)
 
     except Exception as e:
         bot_response = f"Error processing image: {e}"
@@ -122,7 +114,6 @@ def main() -> None:
 
     application = ApplicationBuilder().token(TOKEN).build()
 
-    # Add handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
     application.add_handler(MessageHandler(filters.PHOTO, handle_image))
