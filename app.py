@@ -9,7 +9,7 @@ from telegram.ext import (
     filters,
 )
 
-from pipelines.db import DB
+from pipelines.db import db
 from pipelines.handlers import echo, start_command
 from pipelines.quiz import quiz_conversation_handler
 
@@ -27,7 +27,6 @@ def main() -> None:
     application = ApplicationBuilder().token(TOKEN).build()
 
     # Initialize the database (ensure it's a singleton if necessary)
-    db = DB()
 
     # Add handlers
     application.add_handler(CommandHandler("start", start_command))

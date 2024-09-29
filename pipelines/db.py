@@ -20,26 +20,24 @@ class Interaction(BaseModel):
     timestamp: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class DB:
-
     # ensure its singleton DB
     _instance_lock = threading.Lock()
     _instance = None
 
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            with cls._instance_lock:
+                if cls._instance is None:
+                    cls._instance = super(DB, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
         self.conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
         self._create_tables()
-
-    def __new__(cls, *args, **kwargs):
-        if not hasattr(DB, "_instance"):
-            with DB._instance_lock:
-                if not hasattr(DB, "_instance"):
-                    DB._instance = super(DB, cls).__new__(cls)
-        return DB._instance
-
 
     def _create_tables(self):
         cursor = self.conn.cursor()
@@ -195,3 +193,6 @@ class DB:
 
     def close(self):
         self.conn.close()
+
+
+db = DB()

@@ -1,5 +1,6 @@
 import json
 import random
+import re
 
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
@@ -12,10 +13,8 @@ from telegram.ext import (
 
 from llms.openai import call_openai
 from llms.prompt import system_prompt
-from pipelines.db import DB
+from pipelines.db import db
 from pipelines.utils import send_main_menu
-
-db = DB()
 
 # Conversation states for the quiz
 QUIZ_START, QUIZ_QUESTION = range(2)
@@ -59,7 +58,13 @@ async def quiz_get_question(update: Update, context: CallbackContext):
 
     prompt = system_prompt.format(subject=subject)
     bot_response = call_openai([], user, prompt)
-    print(bot_response)
+    code_fence_pattern = r"^```(?:json)?\n([\s\S]*?)\n```$"
+    match = re.match(code_fence_pattern, bot_response)
+    if match:
+        bot_response = match.group(1).strip()
+    else:
+        bot_response = bot_response.strip("`")
+
     # Parse the JSON response
     try:
         quiz_data = json.loads(bot_response)
@@ -98,6 +103,7 @@ async def quiz_get_question(update: Update, context: CallbackContext):
 
 async def quiz_check_answer(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
+    print(update.message.text)
     user_answer = update.message.text.strip().upper()
     valid_options = ["A", "B", "C", "D"]
 

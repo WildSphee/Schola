@@ -1,11 +1,9 @@
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import ContextTypes
 
-from pipelines.db import DB
+from pipelines.db import db
 from pipelines.quiz import quiz_start
 from pipelines.utils import send_main_menu, send_subject_menu
-
-db = DB()
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -26,7 +24,6 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.message.from_user
     user_id = str(user.id)
     user_message = update.message.text.strip()
-
     # Get the user's current pipeline
     current_pipeline = db.get_user_pipeline(user_id)
 
