@@ -1,10 +1,11 @@
-import os
 import sqlite3
 from datetime import datetime
 from typing import Dict, List
 
 from pydantic import BaseModel
 from telegram import User
+import os
+
 
 DATABASE_FILE = f"{os.getenv('DATABASE_NAME') or 'default'}.db"
 
@@ -20,7 +21,6 @@ class Interaction(BaseModel):
 
     class Config:
         orm_mode = True
-
 
 class DB:
     def __init__(self):
@@ -48,6 +48,7 @@ class DB:
             CREATE TABLE IF NOT EXISTS user_states (
                 user_id TEXT PRIMARY KEY,
                 pipeline TEXT,
+                subjects TEXT,  -- Comma-separated list of subjects
                 last_interaction DATETIME DEFAULT CURRENT_TIMESTAMP
             )
             """
@@ -111,7 +112,7 @@ class DB:
         count = cursor.fetchone()[0]
         return count
 
-    # user pipeline management
+    # Pipeline management methods
     def set_user_pipeline(self, user_id: str, pipeline: str) -> None:
         with self.conn:
             self.conn.execute(
@@ -120,7 +121,7 @@ class DB:
                 VALUES (?, ?, ?)
                 ON CONFLICT(user_id) DO UPDATE SET pipeline=excluded.pipeline, last_interaction=excluded.last_interaction
                 """,
-                (user_id, pipeline, datetime.utcnow()),
+                (user_id, pipeline, datetime.now()),
             )
 
     def get_user_pipeline(self, user_id: str) -> str:
@@ -133,6 +134,50 @@ class DB:
         )
         result = cursor.fetchone()
         return result[0] if result else None
+
+    # Methods to manage user's selected subjects
+    def add_user_subject(self, user_id: str, subject: str) -> None:
+        with self.conn:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "SELECT subjects FROM user_states WHERE user_id = ?",
+                (user_id,),
+            )
+            result = cursor.fetchone()
+            if result and result[0]:
+                subjects = result[0].split(',')
+                if subject not in subjects:
+                    subjects.append(subject)
+            else:
+                subjects = [subject]
+            subjects_str = ','.join(subjects)
+            self.conn.execute(
+                """
+                UPDATE user_states SET subjects = ?, last_interaction = ? WHERE user_id = ?
+                """,
+                (subjects_str, datetime.now(), user_id),
+            )
+
+    def get_user_subjects(self, user_id: str) -> List[str]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT subjects FROM user_states WHERE user_id = ?",
+            (user_id,),
+        )
+        result = cursor.fetchone()
+        if result and result[0]:
+            return result[0].split(',')
+        else:
+            return []
+
+    def clear_user_subjects(self, user_id: str) -> None:
+        with self.conn:
+            self.conn.execute(
+                """
+                UPDATE user_states SET subjects = '', last_interaction = ? WHERE user_id = ?
+                """,
+                (datetime.now(), user_id),
+            )
 
     def close(self):
         self.conn.close()
