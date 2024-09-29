@@ -5,15 +5,14 @@ from telegram import User
 
 
 def call_openai(
-    history: List[Dict[str, str]], user: User, query: str,
+    history: List[Dict[str, str]],
+    user: User,
+    query: str,
 ) -> str:
     client = OpenAI()
 
     messages = history + [
-        {
-            "role": "system",
-            "content": query
-        },
+        {"role": "system", "content": query},
     ]
 
     completion = client.chat.completions.create(
