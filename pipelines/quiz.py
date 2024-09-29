@@ -46,14 +46,13 @@ async def quiz_start(update: Update, context: CallbackContext):
 
 async def quiz_get_question(update: Update, context: CallbackContext):
     """Generate and present a quiz question to the user."""
-    user = update.message.from_user
     subjects = context.user_data.get("subjects")
 
     # Randomly select a subject
     subject = random.choice(subjects)
 
     prompt = system_prompt.format(subject=subject)
-    bot_response = call_openai([], user, prompt)
+    bot_response = call_openai([], prompt)
 
     # Remove any code fences from the response
     bot_response = bot_response.strip()
