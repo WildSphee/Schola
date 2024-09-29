@@ -1,26 +1,18 @@
 from typing import Dict, List
 
-from dotenv import load_dotenv
 from openai import OpenAI
 from telegram import User
 
-# Load environment variables from a .env file
-load_dotenv()
-
 
 def call_openai(
-    history: List[Dict[str, str]], user: User, query: str, prompt: str
+    history: List[Dict[str, str]], user: User, query: str,
 ) -> str:
     client = OpenAI()
 
     messages = history + [
         {
             "role": "system",
-            "content": prompt.format(
-                username=user.first_name or "<not provided>",
-                query=query,
-                course_name="GENERAL",
-            ),
+            "content": query
         },
     ]
 

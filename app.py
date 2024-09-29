@@ -1,4 +1,6 @@
+import json
 import os
+import random
 
 from pydantic import BaseModel
 from telegram import (
@@ -6,22 +8,27 @@ from telegram import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
     Update,
-    User,
 )
 from telegram.ext import (
     ApplicationBuilder,
+    CallbackContext,
     CommandHandler,
     ContextTypes,
+    ConversationHandler,
     MessageHandler,
     filters,
 )
 
 from db import DB
 from llms.openai import call_openai
+from llms.prompt import system_prompt
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
 db = DB()
+
+# Conversation states for the quiz
+QUIZ_START, QUIZ_QUESTION = range(2)
 
 
 class Message(BaseModel):
@@ -31,7 +38,7 @@ class Message(BaseModel):
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /start command and reset the user's pipeline."""
-    user: User = update.message.from_user
+    user = update.message.from_user
     user_id = str(user.id)
     bot_response = f"Hello {user.first_name}! I am Schola, your learning assistant. 😊"
 
@@ -57,9 +64,9 @@ async def send_main_menu(update: Update, response: str = "Please choose an optio
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle text messages from the user."""
-    user: User = update.message.from_user
+    user = update.message.from_user
     user_id = str(user.id)
-    user_message: str = update.message.text.strip()
+    user_message = update.message.text.strip()
 
     # Get the user's current pipeline
     current_pipeline = db.get_user_pipeline(user_id)
@@ -80,16 +87,14 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await handle_default_pipeline(update, context, user, user_message)
     elif current_pipeline == "select_subject":
         await handle_select_subject_pipeline(update, context, user, user_message)
-    elif current_pipeline == "quiz":
-        await handle_quiz_pipeline(update, context, user, user_message)
     elif current_pipeline == "configuration":
         await handle_configuration_pipeline(update, context, user, user_message)
     else:
-        await update.message.reply_text("Unknown pipeline. Please /start to begin.")
+        await update.message.reply_text("Unknown command. Please use the menu options.")
 
 
 async def handle_default_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user: User, user_message: str
+    update: Update, context: ContextTypes.DEFAULT_TYPE, user, user_message: str
 ):
     """Handle the default pipeline where the user selects a pipeline."""
     user_id = str(user.id)
@@ -97,8 +102,8 @@ async def handle_default_pipeline(
         db.set_user_pipeline(user_id, "select_subject")
         await send_subject_menu(update, user)
     elif user_message.lower() == "quiz":
-        db.set_user_pipeline(user_id, "quiz")
-        await handle_quiz_pipeline(update, context, user, user_message)
+        # Start the quiz conversation
+        return await quiz_start(update, context)
     elif user_message.lower() == "configuration":
         db.set_user_pipeline(user_id, "configuration")
         await handle_configuration_pipeline(update, context, user, user_message)
@@ -106,7 +111,7 @@ async def handle_default_pipeline(
         await update.message.reply_text("Please choose a valid option from the menu.")
 
 
-async def send_subject_menu(update: Update, user: User):
+async def send_subject_menu(update: Update, user):
     """Send the subject selection menu."""
     subjects = ["Math", "Science", "History", "English", "Done Selecting Subjects"]
     keyboard = [[KeyboardButton(subject)] for subject in subjects]
@@ -119,7 +124,7 @@ async def send_subject_menu(update: Update, user: User):
 
 
 async def handle_select_subject_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user: User, user_message: str
+    update: Update, context: ContextTypes.DEFAULT_TYPE, user, user_message: str
 ):
     """Handle the subject selection pipeline."""
     user_id = str(user.id)
@@ -152,11 +157,23 @@ async def handle_select_subject_pipeline(
         )
 
 
-async def handle_quiz_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user: User, user_message: str
+async def handle_configuration_pipeline(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, user, user_message: str
 ):
-    """Handle interactions in the Quiz pipeline."""
+    await update.message.reply_text(
+        "Configuration settings are not implemented yet.",
+        reply_markup=ReplyKeyboardMarkup(
+            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+        ),
+    )
+
+
+# Quiz conversation handler functions
+async def quiz_start(update: Update, context: CallbackContext):
+    """Start the quiz by checking if the user has selected subjects."""
+    user = update.message.from_user
     user_id = str(user.id)
+
     # Get user's selected subjects
     subjects = db.get_user_subjects(user_id)
     if not subjects:
@@ -166,43 +183,123 @@ async def handle_quiz_pipeline(
                 [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
             ),
         )
-        return
+        return ConversationHandler.END
 
-    # Generate a quiz question from selected subjects using LLM
-    import random
+    # Store subjects in context for later use
+    context.user_data["subjects"] = subjects
 
+    # Move to the next state to get a question
+    return await quiz_get_question(update, context)
+
+
+async def quiz_get_question(update: Update, context: CallbackContext):
+    """Generate and present a quiz question to the user."""
+    user = update.message.from_user
+    user_id = str(user.id)
+    subjects = context.user_data.get("subjects")
+
+    if not subjects:
+        subjects = db.get_user_subjects(user_id)
+        context.user_data["subjects"] = subjects
+
+    # Randomly select a subject
     subject = random.choice(subjects)
-    system_prompt = f"You are a teacher creating a simple quiz question for {subject} suitable for a child. Provide one question."
 
-    # Prepare history
-    history = []
-    api_history = [{"role": msg.role, "content": msg.content} for msg in history]
+    bot_response = call_openai([], user, system_prompt.format(subject=subject))
 
-    # Generate a quiz question
-    bot_response = call_openai(api_history, user, "", system_prompt)
+    # Parse the JSON response
+    try:
+        quiz_data = json.loads(bot_response)
+        question = quiz_data["question"]
+        options = quiz_data["options"]
+        correct_option = quiz_data["correct_option"]
+        explanation = quiz_data["explanation"]
+    except (json.JSONDecodeError, KeyError):
+        await update.message.reply_text(
+            "Sorry, there was an error generating the quiz question. Please try again.",
+            reply_markup=ReplyKeyboardMarkup(
+                [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+            ),
+        )
+        return ConversationHandler.END
 
-    db.log_interaction(user, user_message, bot_response)
+    # Save the correct answer and explanation in user_data
+    context.user_data["correct_option"] = correct_option.upper()
+    context.user_data["explanation"] = explanation
 
-    # Present the question to the user
+    # Present the question and options to the user
+    options_text = "\n".join([f"{key}: {value}" for key, value in options.items()])
+    message = f"Here's your question from {subject}:\n\n{question}\n\n{options_text}\n\nPlease select A, B, C, or D."
     await update.message.reply_text(
-        f"Here's a question from {subject}:\n\n{bot_response}",
+        message,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+            [["A", "B", "C", "D"], [KeyboardButton("Back to Main Menu")]],
+            one_time_keyboard=True,
+            resize_keyboard=True,
         ),
     )
 
-    # Optionally, you can wait for the user's answer and check correctness
+    return QUIZ_QUESTION
 
 
-async def handle_configuration_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user: User, user_message: str
-):
+async def quiz_check_answer(update: Update, context: CallbackContext):
+    """Check the user's answer and provide feedback."""
+    user_answer = update.message.text.strip().upper()
+    valid_options = ["A", "B", "C", "D"]
+
+    if user_answer == "Next Question":
+        return await quiz_get_question(update, context)
+
+    if user_answer == "Back to Main Menu":
+        await send_main_menu(update)
+        return ConversationHandler.END
+
+    if user_answer not in valid_options:
+        await update.message.reply_text(
+            "Please select a valid option: A, B, C, or D.",
+            reply_markup=ReplyKeyboardMarkup(
+                [["A", "B", "C", "D"], [KeyboardButton("Back to Main Menu")]],
+                one_time_keyboard=True,
+                resize_keyboard=True,
+            ),
+        )
+        return QUIZ_QUESTION
+
+    correct_option = context.user_data.get("correct_option")
+    explanation = context.user_data.get("explanation")
+
+    if user_answer == correct_option:
+        await update.message.reply_text(
+            "Correct! 🎉",
+            reply_markup=ReplyKeyboardMarkup(
+                [
+                    [KeyboardButton("Next Question")],
+                    [KeyboardButton("Back to Main Menu")],
+                ],
+                resize_keyboard=True,
+            ),
+        )
+    else:
+        await update.message.reply_text(
+            f"Incorrect. The correct answer is {correct_option}.\n\nExplanation: {explanation}",
+            reply_markup=ReplyKeyboardMarkup(
+                [
+                    [KeyboardButton("Next Question")],
+                    [KeyboardButton("Back to Main Menu")],
+                ],
+                resize_keyboard=True,
+            ),
+        )
+
+    return QUIZ_START
+
+
+async def stop_quiz(update: Update, context: CallbackContext):
+    """End the quiz conversation."""
     await update.message.reply_text(
-        "Configuration settings are not implemented yet.",
-        reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
-        ),
+        "Quiz ended. Returning to main menu.", reply_markup=ReplyKeyboardRemove()
     )
+    return ConversationHandler.END
 
 
 def main() -> None:
@@ -213,10 +310,26 @@ def main() -> None:
 
     application = ApplicationBuilder().token(TOKEN).build()
 
+    # Define the quiz conversation handler
+    quiz_handler = ConversationHandler(
+        entry_points=[MessageHandler(filters.Regex("^Quiz$"), quiz_start)],
+        states={
+            QUIZ_START: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, quiz_get_question)
+            ],
+            QUIZ_QUESTION: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, quiz_check_answer)
+            ],
+        },
+        fallbacks=[CommandHandler("stop", stop_quiz)],
+        map_to_parent={
+            ConversationHandler.END: QUIZ_START,
+        },
+    )
+
     application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(quiz_handler)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-    # You can implement the image handler if needed
-    # application.add_handler(MessageHandler(filters.PHOTO, handle_image))
 
     application.run_polling()
 
