@@ -1,11 +1,10 @@
+import os
 import sqlite3
 from datetime import datetime
 from typing import Dict, List
 
 from pydantic import BaseModel
 from telegram import User
-import os
-
 
 DATABASE_FILE = f"{os.getenv('DATABASE_NAME') or 'default'}.db"
 
@@ -21,6 +20,7 @@ class Interaction(BaseModel):
 
     class Config:
         orm_mode = True
+
 
 class DB:
     def __init__(self):
@@ -145,12 +145,12 @@ class DB:
             )
             result = cursor.fetchone()
             if result and result[0]:
-                subjects = result[0].split(',')
+                subjects = result[0].split(",")
                 if subject not in subjects:
                     subjects.append(subject)
             else:
                 subjects = [subject]
-            subjects_str = ','.join(subjects)
+            subjects_str = ",".join(subjects)
             self.conn.execute(
                 """
                 UPDATE user_states SET subjects = ?, last_interaction = ? WHERE user_id = ?
@@ -166,7 +166,7 @@ class DB:
         )
         result = cursor.fetchone()
         if result and result[0]:
-            return result[0].split(',')
+            return result[0].split(",")
         else:
             return []
 
