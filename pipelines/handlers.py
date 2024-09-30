@@ -1,13 +1,34 @@
+import os
+from typing import Any
+
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
-from telegram.ext import ContextTypes
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 from pipelines.db import db
+from pipelines.qa import qa_image_handler, qa_start, qa_text_handler
 from pipelines.quiz import quiz_start
 from pipelines.utils import send_main_menu, send_subject_menu
 
+TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
+
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle the /start command and reset the user's pipeline."""
+    """
+    Handle the /start command and reset the user's pipeline.
+
+    Args:
+        update (Update): Incoming Telegram update.
+        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
+
+    Returns:
+        None
+    """
     user = update.message.from_user
     user_id = str(user.id)
     bot_response = f"Hello {user.first_name}! I am Schola, your learning assistant. 😊"
@@ -20,12 +41,21 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle text messages from the user."""
+    """
+    Handle text messages from the user and route them based on the current pipeline.
+
+    Args:
+        update (Update): Incoming Telegram update.
+        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
+
+    Returns:
+        None
+    """
     user = update.message.from_user
     user_id = str(user.id)
-    user_message = update.message.text.strip()
+    user_message: str = update.message.text.strip()
     # Get the user's current pipeline
-    current_pipeline = db.get_user_pipeline(user_id)
+    current_pipeline: str = db.get_user_pipeline(user_id)
 
     # If no pipeline is set, default to 'default'
     if not current_pipeline:
@@ -45,14 +75,27 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await handle_select_subject_pipeline(update, context, user, user_message)
     elif current_pipeline == "configuration":
         await handle_configuration_pipeline(update, context, user, user_message)
+    elif current_pipeline == "qa":
+        await qa_text_handler(update, context)
     else:
         await update.message.reply_text("Unknown command. Please use the menu options.")
 
 
 async def handle_default_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user, user_message: str
-):
-    """Handle the default pipeline where the user selects a pipeline."""
+    update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str
+) -> None:
+    """
+    Handle the default pipeline where the user selects a pipeline.
+
+    Args:
+        update (Update): Incoming Telegram update.
+        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
+        user (Any): The user object from the message.
+        user_message (str): The message text sent by the user.
+
+    Returns:
+        None
+    """
     user_id = str(user.id)
     if user_message.lower() == "select subject":
         db.set_user_pipeline(user_id, "select_subject")
@@ -63,14 +106,28 @@ async def handle_default_pipeline(
     elif user_message.lower() == "configuration":
         db.set_user_pipeline(user_id, "configuration")
         await handle_configuration_pipeline(update, context, user, user_message)
+    elif user_message.lower() == "q&a":
+        db.set_user_pipeline(user_id, "qa")
+        await qa_start(update, context)
     else:
         await update.message.reply_text("Please choose a valid option from the menu.")
 
 
 async def handle_select_subject_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user, user_message: str
-):
-    """Handle the subject selection pipeline."""
+    update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str
+) -> None:
+    """
+    Handle the subject selection pipeline.
+
+    Args:
+        update (Update): Incoming Telegram update.
+        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
+        user (Any): The user object from the message.
+        user_message (str): The message text sent by the user.
+
+    Returns:
+        None
+    """
     user_id = str(user.id)
     valid_subjects = [
         "Math",
@@ -102,12 +159,71 @@ async def handle_select_subject_pipeline(
 
 
 async def handle_configuration_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user, user_message: str
-):
-    """Handle the configuration pipeline."""
+    update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str
+) -> None:
+    """
+    Handle the configuration pipeline.
+
+    Args:
+        update (Update): Incoming Telegram update.
+        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
+        user (Any): The user object from the message.
+        user_message (str): The message text sent by the user.
+
+    Returns:
+        None
+    """
     await update.message.reply_text(
         "Configuration settings are not implemented yet.",
         reply_markup=ReplyKeyboardMarkup(
             [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
         ),
     )
+
+
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle photo messages by routing them to the appropriate pipeline.
+
+    Args:
+        update (Update): Incoming Telegram update.
+        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
+
+    Returns:
+        None
+    """
+    user = update.message.from_user
+    user_id = str(user.id)
+    current_pipeline: str = db.get_user_pipeline(user_id)
+
+    if current_pipeline == "qa":
+        await qa_image_handler(update, context)
+    else:
+        await update.message.reply_text("Please send images only in Q&A mode.")
+
+
+def main() -> None:
+    """
+    Start the bot and register command and message handlers.
+
+    Returns:
+        None
+    """
+    if TOKEN is None:
+        print("No token found. Please set TELEGRAM_EXAM_BOT_TOKEN in your .env file.")
+        return
+
+    application = ApplicationBuilder().token(TOKEN).build()
+
+    # Add command handlers
+    application.add_handler(CommandHandler("start", start_command))
+
+    # Add message handlers
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+
+    application.run_polling()
+
+
+if __name__ == "__main__":
+    main()
