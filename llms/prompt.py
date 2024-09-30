@@ -31,9 +31,13 @@ User question:
 
 """
 qa_prompt_img = """
-You are answering questions about the subject(s) of {subject}. Answer professionally and concisely. The image question is extracted using OCR so there might be ambiguity in wordings. Try your best to give guidance for the users questions and answer with explanations.
+You are answering questions about the subject(s) of {subject}. Answer professionally and concisely. 
+The image question is extracted using OCR so there might be ambiguity in wordings. 
+There might be a lot of unneeded context from the image OCR, only answer the portion about the question, 
+if its not a question then provide more context on the text.
+Try your best to give guidance for the users questions and answer with explanations.
 
-Image question:
+Image OCR:
 ```
 {query}
 ```
