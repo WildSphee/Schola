@@ -20,8 +20,8 @@ Schola is a Telegram chatbot designed to assist students in their learning journ
 
 ### Clone the Repository
 
-```bash
-git clone https://github.com/yourusername/schola.git
+```sh
+git clone https://github.com/WildSphee/schola.git 
 cd schola
 ```
 
@@ -29,18 +29,28 @@ cd schola
 
 Use Poetry to install all dependencies:
 
-```bash
+```sh
 pip install poetry
 poetry install
 ```
 
 This command will create a virtual environment and install all required packages specified in `pyproject.toml`.
 
+#### Install LibreOffice
+
+LibreOffice is required for handling certain document types such as `.docx`, `.pptx`, and `.pdf`. To install LibreOffice on a Linux environment, run the following command:
+
+```sh
+sudo apt update
+sudo apt install libreoffice
+```
+
+
 #### Environment Variables
 
 Create a `.env` file in the root directory to store your environment variables:
 
-```env
+```r
 OPENAI_API_KEY=<your openai api key>
 TELEGRAM_EXAM_BOT_TOKEN=<your telegram bot token>
 
@@ -53,15 +63,15 @@ REPLICATE_API_TOKEN=<your replicate api token for image generation>
 
 # Database File Name
 DATABASE_NAME=database
-
 ```
+
 Replace the environment variables with your actual keys.
 
 ## Running the Bot
 
 Start the Telegram bot with:
 
-```bash
+```sh
 sh scripts/start.sh
 ```
 
@@ -75,19 +85,36 @@ Ensure your code adheres to the project's style guidelines.
 
 Execute the linting script:
 
-```bash
+```sh
 sh scripts/lint.sh
 ```
 
 This script utilizes `ruff` for linting and `mypy` for type checking.
 
+### Running Tests
+
+Tests are managed using `pytest`, which is included as a development dependency. To run the tests, use the following command:
+
+```sh
+pytest
+```
+
+This will automatically discover and run all test files (usually named `test_*.py`) in the `tests/` directory. Make sure you have installed the development dependencies by running:
+
+```sh
+poetry install --with dev
+```
+
+Running tests regularly ensures that the code remains reliable and that new changes don’t break existing functionality.
+
 ### Dependencies
 
 Development dependencies are managed under the `[tool.poetry.group.dev.dependencies]` section in `pyproject.toml`.
 
+
 ## Project Structure
 
-```
+```text
 schola/
 ├── bot.py
 ├── pyproject.toml
@@ -100,7 +127,7 @@ schola/
 ## Scripts
 
 - **Linting**: `sh scripts/lint.sh` - Runs code linting and type checks.
-
+- **Running Tests**: `pytest` - Discovers and runs all unit tests.
 
 ## Contact
 
@@ -133,7 +160,6 @@ If you encounter issues:
 - Add unit tests for better reliability.
 - Expand subject coverage.
 - Implement voice input capabilities.
-
-```
+- Ensure LibreOffice is installed correctly by running `libreoffice --version` in the terminal.
 
 **Happy Learning!**
