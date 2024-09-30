@@ -20,10 +20,20 @@ Ensure the JSON is properly formatted.
 
 ```
 """
-qa_prompt = """
-You are answering questions about the subject of {subject}. Answer professionally and verbosely.
+
+qa_prompt_msg = """
+You are answering questions about the subject(s) of {subject}. Answer professionally and concisely. User may contain Typos and acronyms, try your best to give guidance for the users questions and answer with explanations.
 
 User question:
+```
+{query}
+```
+
+"""
+qa_prompt_img = """
+You are answering questions about the subject(s) of {subject}. Answer professionally and concisely. The image question is extracted using OCR so there might be ambiguity in wordings. Try your best to give guidance for the users questions and answer with explanations.
+
+Image question:
 ```
 {query}
 ```

@@ -7,7 +7,8 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from llms.openai import call_openai
-from llms.prompt import qa_prompt
+from llms.prompt import qa_prompt_img, qa_prompt_msg
+from pipelines.db import db
 from tools.form_recognizer import analyze_image
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
@@ -39,15 +40,20 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     Returns:
         None
     """
+    user = update.message.from_user
+    user_id = str(user.id)
     user_message: str = update.message.text.strip()
 
     await update.message.chat.send_action(action=ChatAction.TYPING)
 
     try:
-        history: List[
-            Dict[str, str]
-        ] = []  # Replace with actual retrieval from the database
-        bot_response: str = call_openai(history, user_message, qa_prompt)
+        history: List[Dict[str, str]] = db.get_chat_history(user_id)
+        subjects: List[str] = db.get_user_subjects(user_id)
+
+        bot_response: str = call_openai(
+            history,
+            qa_prompt_msg.format(subject=", ".join(subjects), query=user_message),
+        )
     except Exception as e:
         bot_response = f"Error processing your request: {e}"
 
@@ -66,6 +72,7 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         None
     """
     user: User = update.message.from_user
+    user_id = str(user.id)
     photo = update.message.photo[-1]  # Get the highest resolution photo
 
     file = await photo.get_file()
@@ -76,10 +83,13 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         await file.download_to_drive(file_path)
         extracted_text: str = analyze_image(file_path)
-        history: List[
-            Dict[str, str]
-        ] = []  # Replace with actual retrieval from the database
-        bot_response: str = call_openai(history, user, extracted_text, qa_prompt)
+        subjects: List[str] = db.get_user_subjects(user_id)
+
+        history: List[Dict[str, str]] = db.get_chat_history(user_id)
+        bot_response: str = call_openai(
+            history,
+            qa_prompt_img.format(subject=", ".join(subjects), query=extracted_text),
+        )
     except Exception as e:
         bot_response = f"Error processing image: {e}"
 
