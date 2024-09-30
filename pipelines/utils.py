@@ -15,7 +15,7 @@ async def send_main_menu(update: Update, response: str = "Please choose an optio
     await update.message.reply_text(response, reply_markup=reply_markup)
 
 
-async def send_subject_menu(update: Update, user):
+async def send_subject_menu(update: Update):
     """Send the subject selection menu."""
     subjects = ["Math", "Science", "History", "English", "Done Selecting Subjects"]
     keyboard = [[KeyboardButton(subject)] for subject in subjects]

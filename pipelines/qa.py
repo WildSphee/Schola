@@ -2,13 +2,19 @@ import os
 import tempfile
 from typing import Dict, List
 
-from telegram import Update, User
+from telegram import (
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    Update,
+    User,
+)
 from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from llms.openai import call_openai
 from llms.prompt import qa_prompt_img, qa_prompt_msg
 from pipelines.db import db
+from pipelines.utils import send_main_menu
 from tools.form_recognizer import analyze_image
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
@@ -26,7 +32,12 @@ async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         None
     """
     bot_response: str = "You are now in the Q&A mode. You can ask questions or send images for analysis."
-    await update.message.reply_text(bot_response)
+    await update.message.reply_text(
+        bot_response,
+        reply_markup=ReplyKeyboardMarkup(
+            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+        ),
+    )
 
 
 async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -44,6 +55,11 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     user_id = str(user.id)
     user_message: str = update.message.text.strip()
 
+    if user_message.lower() == "back to main menu":
+        db.set_user_pipeline(user_id, "default")
+        await send_main_menu(update)
+        return
+
     await update.message.chat.send_action(action=ChatAction.TYPING)
 
     try:
@@ -57,7 +73,12 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     except Exception as e:
         bot_response = f"Error processing your request: {e}"
 
-    await update.message.reply_text(bot_response)
+    await update.message.reply_text(
+        bot_response,
+        reply_markup=ReplyKeyboardMarkup(
+            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+        ),
+    )
 
 
 async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -75,12 +96,12 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     user_id = str(user.id)
     photo = update.message.photo[-1]  # Get the highest resolution photo
 
-    file = await photo.get_file()
-    file_path = tempfile.mktemp()
-
     await update.message.chat.send_action(action=ChatAction.TYPING)
 
     try:
+        file = await photo.get_file()
+        file_path = tempfile.mktemp()
+
         await file.download_to_drive(file_path)
         extracted_text: str = analyze_image(file_path)
         subjects: List[str] = db.get_user_subjects(user_id)
@@ -93,4 +114,9 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     except Exception as e:
         bot_response = f"Error processing image: {e}"
 
-    await update.message.reply_text(bot_response)
+    await update.message.reply_text(
+        bot_response,
+        reply_markup=ReplyKeyboardMarkup(
+            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+        ),
+    )

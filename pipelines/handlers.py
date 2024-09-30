@@ -1,21 +1,22 @@
-import os
+import tempfile
 from typing import Any, Literal
 
-from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import (
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+    Update,
+)
+from telegram.constants import ChatAction
 from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
     ContextTypes,
-    MessageHandler,
-    filters,
 )
 
 from pipelines.db import db
 from pipelines.qa import qa_image_handler, qa_start, qa_text_handler
 from pipelines.quiz import quiz_start
 from pipelines.utils import send_main_menu, send_subject_menu
-
-TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
+from tools.whisper import transcribe_voice
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -100,7 +101,7 @@ async def handle_default_pipeline(
 
     if menu_selection == "select subject":
         db.set_user_pipeline(user_id, "select_subject")
-        await send_subject_menu(update, user)
+        await send_subject_menu(update)
     elif menu_selection == "quiz":
         # Start the quiz conversation
         return await quiz_start(update, context)
@@ -149,7 +150,7 @@ async def handle_select_subject_pipeline(
             await update.message.reply_text(
                 f"Added {user_message} to your subjects. You can select more or choose 'Done Selecting Subjects'."
             )
-            await send_subject_menu(update, user)
+            await send_subject_menu(update)
     else:
         await update.message.reply_text(
             "Please select a subject from the list.",
@@ -203,28 +204,37 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text("Please send images only in Q&A mode.")
 
 
-def main() -> None:
+async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    Start the bot and register command and message handlers.
+    Handle voice messages by converting them to text and passing to qa_text_handler.
+
+    Args:
+        update (Update): Incoming Telegram update.
+        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
     Returns:
         None
     """
-    if TOKEN is None:
-        print("No token found. Please set TELEGRAM_EXAM_BOT_TOKEN in your .env file.")
-        return
+    user = update.message.from_user
+    user_id = str(user.id)
+    current_pipeline: str = db.get_user_pipeline(user_id)
 
-    application = ApplicationBuilder().token(TOKEN).build()
+    if current_pipeline == "qa":
+        voice = update.message.voice
+        file = await voice.get_file()
+        file_path = tempfile.mktemp(suffix=".ogg")
 
-    # Add command handlers
-    application.add_handler(CommandHandler("start", start_command))
+        await update.message.chat.send_action(action=ChatAction.TYPING)
 
-    # Add message handlers
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-    application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+        try:
+            await file.download_to_drive(file_path)
 
-    application.run_polling()
+            # STT using whisper
+            transcribed_text = transcribe_voice(file_path)
+            update.message.text = transcribed_text
 
-
-if __name__ == "__main__":
-    main()
+            await qa_text_handler(update, context)
+        except Exception as e:
+            await update.message.reply_text(f"Error processing voice message: {e}")
+    else:
+        await update.message.reply_text("Please send voice messages only in Q&A mode.")
