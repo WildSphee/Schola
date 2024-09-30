@@ -3,155 +3,136 @@ import os
 import subprocess
 import tempfile
 from io import BytesIO
-from tempfile import SpooledTemporaryFile
 from typing import Dict, List, Tuple
 
 import fitz
 import pandas as pd
-from azure.ai.formrecognizer import DocumentAnalysisClient
 from docx import Document
-from fastapi import UploadFile
 from pptx import Presentation
 from pypdf import PdfReader
 
-from app.core.config import settings
+from tools.form_recognizer import get_doc_analysis_client
+
+# Azure Form Recognizer credentials (assumed to be set)
+AZURE_FORM_RECOGNIZER_ENDPOINT = "YOUR_FORM_RECOGNIZER_ENDPOINT"
+AZURE_FORM_RECOGNIZER_CREDENTIAL = "YOUR_FORM_RECOGNIZER_CREDENTIAL"
 
 
-def read_docx(docx_file: UploadFile) -> str:
-    """Reads a Docx file a returns a str of convertable text
-    does not require LibreOffice. Cannot convert Image to text
+def read_docx(docx_file) -> str:
+    """Reads a DOCX file and returns a string of the text content.
 
     Args:
-        docx_file (UploadFile): The DOCX file to convert.
+        docx_file: A file-like object representing the DOCX file.
+
     Returns:
-        (str): a string of all convertable text in the document
+        str: A string containing all the text from the document.
     """
     with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as temp:
-        docx_file.file.seek(0)
-        data = docx_file.file.read()
+        docx_file.seek(0)
+        data = docx_file.read()
         temp.write(data)
         temp_filename = temp.name
-        # Use python-docx to read the temporary file
-        doc = Document(temp_filename)
-        text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
-
+    # Use python-docx to read the temporary file
+    doc = Document(temp_filename)
+    text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
     return text
 
 
-def read_pptx(pptx_file: UploadFile) -> str:
-    """Reads a PPTX file a returns a str of convertable text
-    does not require LibreOffice. Cannot convert Image to text
+def read_pptx(pptx_file) -> str:
+    """Reads a PPTX file and returns a string of the text content.
 
     Args:
-        pptx_file (UploadFile): The DOCX file to convert.
+        pptx_file: A file-like object representing the PPTX file.
+
     Returns:
-        (str): a string of all convertable text in the document
+        str: A string containing all the text from the presentation.
     """
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pptx") as temp:
-        pptx_file.file.seek(0)
-        contents = pptx_file.file.read()
+        pptx_file.seek(0)
+        contents = pptx_file.read()
         temp.write(contents)
         temp_filename = temp.name
-        # Use python-pptx to read the temporary file
-        presentation = Presentation(temp_filename)
-
-        text = ""
-        for slide in presentation.slides:
-            for shape in slide.shapes:
-                if hasattr(shape, "text"):
-                    text += shape.text + " "
-
+    # Use python-pptx to read the temporary file
+    presentation = Presentation(temp_filename)
+    text = ""
+    for slide in presentation.slides:
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                text += shape.text + " "
     return text
 
 
-def doc_to_pdf(file: UploadFile) -> UploadFile:
+def doc_to_pdf(file):
     """
-    Converts an uploaded document file to PDF using LibreOffice and
-    returns the PDF as an UploadFile. Requires LibreOffice running in
-    background as a headless daemon.
+    Converts a document file to PDF using LibreOffice and returns a file-like object representing the PDF.
 
     Args:
-        file (UploadFile): The file to convert.
+        file: A file-like object representing the document to convert.
 
     Returns:
-        UploadFile: An UploadFile object of the converted PDF.
-
-    Raises:
-        Exception: If LibreOffice is not installed.
+        file-like object: A file-like object representing the converted PDF.
     """
     try:
         # Check if LibreOffice is installed
-        subprocess.run(["libreoffice", "--version"], check=True)
-    except subprocess.CalledProcessError:
-        raise Exception(
-            user_message=f"Failed to read file {file.filename}, "
-            "please try another file.",
-            internal_logging_message="Please install LibreOffice to doc "
-            "slice PPTX & DOCX.",
+        subprocess.run(
+            ["libreoffice", "--version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
+    except subprocess.CalledProcessError:
+        raise Exception("Please install LibreOffice to convert documents to PDF.")
 
-    # writing the pptx / docx file to a temp file object
-    with tempfile.NamedTemporaryFile() as temp_file:
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         temp_file_name = temp_file.name
         with open(temp_file_name, "wb") as buffer:
-            file.file.seek(0)
-            buffer.write(file.file.read())
+            file.seek(0)
+            buffer.write(file.read())
 
-        pdf_file_name = os.path.splitext(temp_file_name)[0] + ".pdf"
+    pdf_file_name = os.path.splitext(temp_file_name)[0] + ".pdf"
 
-        # Convert pptx / docx to pdf using libreoffice
-        command = [
-            "libreoffice",
-            "--headless",
-            "--convert-to",
-            "pdf",
-            temp_file_name,
-            "--outdir",
-            os.path.dirname(temp_file_name),
-        ]
-        subprocess.run(command, check=True)
+    # Convert document to PDF using LibreOffice
+    command = [
+        "libreoffice",
+        "--headless",
+        "--convert-to",
+        "pdf",
+        temp_file_name,
+        "--outdir",
+        os.path.dirname(temp_file_name),
+    ]
+    subprocess.run(command, check=True)
 
-    # Create an SpooledTemporaryFile (which can be used by UploadFile)
-    pdf_file = SpooledTemporaryFile()
-    with open(pdf_file_name, "rb") as f:
-        f.seek(0)
-        pdf_file.write(f.read())
-    pdf_file.seek(0)
+    # Read the converted PDF into a file-like object
+    pdf_file = open(pdf_file_name, "rb")
 
-    # Remove the temporary PDF file
+    # Remove the temporary files
+    os.remove(temp_file_name)
     os.remove(pdf_file_name)
 
-    # Create and return an UploadFile object
-    return UploadFile(BytesIO(pdf_file.read()), filename=file.filename)
+    return pdf_file
 
 
-def pdf_to_page_map_azure(file: UploadFile) -> List[Tuple[int, int, str]]:
+def pdf_to_page_map_azure(file) -> List[Tuple[int, int, str]]:
     """
-    takes a pdf document and turn it into a page map,
-    using Azure Form Recognizer and DocumentAnalysisClient
-    by mapping each page into a list, creating a page map
+    Extracts text from a PDF file and returns a page map using Azure Form Recognizer.
 
     Args:
-        file (UploadFile): The file to be unpacked.
+        file: A file-like object representing the PDF file.
 
     Returns:
-        page_map (list[Tuple[int, int, str]]): a list of pages to be read
-            eg: [(int, int, str)]
-            eg: [({page num base 0},
-            {character position where it starts}, {text content})]
-
+        List[Tuple[int, int, str]]: A list of tuples containing page number, offset, and text content.
     """
 
     def _table_to_html(table) -> str:
         """
-        function within get_document_text,
-        turns a table into str, html that's readable
+        Converts a table to HTML string.
 
-        args:
-            table
+        Args:
+            table: The table to convert.
 
-        return:
-            (str): table in html format
+        Returns:
+            str: HTML representation of the table.
         """
         table_html = "<table>"
         rows = [
@@ -182,20 +163,12 @@ def pdf_to_page_map_azure(file: UploadFile) -> List[Tuple[int, int, str]]:
     offset = 0
     page_map: List[Tuple[int, int, str]] = []
 
-    if settings.FORMRECOGNIZER_CREDS is None:
-        raise Exception(
-            user_message="Please contact administrator to enable additional features",
-            internal_logging_message="Form recognizer credentials are required.",
-        )
-    form_recognizer_client = DocumentAnalysisClient(
-        endpoint=settings.FORM_RECOGNIZER_SERVICE,
-        credential=settings.FORMRECOGNIZER_CREDS,
-        headers={"x-ms-useragent": "azure-search-chat-demo/1.0.0"},
-    )
+    # Initialize the Azure Form Recognizer client
+    form_recognizer_client = get_doc_analysis_client()
 
-    # Read file data into bytes, file.file.seek(0) is important!
-    file.file.seek(0)
-    file_data = file.file.read()
+    # Read file data into bytes
+    file.seek(0)
+    file_data = file.read()
 
     # Create a BytesIO object from the file data
     file_stream = BytesIO(file_data)
@@ -204,7 +177,6 @@ def pdf_to_page_map_azure(file: UploadFile) -> List[Tuple[int, int, str]]:
         "prebuilt-layout", document=file_stream
     )
     form_recognizer_results = poller.result()
-    # await file.close()
 
     for page_num, page in enumerate(form_recognizer_results.pages):
         tables_on_page = []
@@ -215,19 +187,19 @@ def pdf_to_page_map_azure(file: UploadFile) -> List[Tuple[int, int, str]]:
                 if table.bounding_regions[0].page_number == page_num + 1:
                     tables_on_page.append(table)
 
-        # mark all positions of the table spans in the page
+        # Mark all positions of the table spans in the page
         page_offset = page.spans[0].offset
         page_length = page.spans[0].length
         table_chars = [-1] * page_length
         for table_id, table in enumerate(tables_on_page):
             for span in table.spans:
-                # replace all table spans with "table_id" in table_chars array
+                # Replace all table spans with "table_id" in table_chars array
                 for i in range(span.length):
                     idx = span.offset - page_offset + i
-                    if idx >= 0 and idx < page_length:
+                    if 0 <= idx < page_length:
                         table_chars[idx] = table_id
 
-        # build page text by replacing charcters in table spans with table html
+        # Build page text by replacing characters in table spans with table HTML
         page_text = ""
         added_tables = set()
         for idx, table_id in enumerate(table_chars):
@@ -236,7 +208,6 @@ def pdf_to_page_map_azure(file: UploadFile) -> List[Tuple[int, int, str]]:
             elif table_id not in added_tables:
                 page_text += _table_to_html(tables_on_page[table_id])
                 added_tables.add(table_id)
-
         page_text += " "
         page_map.append((page_num, offset, page_text))
         offset += len(page_text)
@@ -244,103 +215,72 @@ def pdf_to_page_map_azure(file: UploadFile) -> List[Tuple[int, int, str]]:
     return page_map
 
 
-def pdf_to_page_map_pypdf(file: UploadFile) -> List[Tuple[int, int, str]]:
+def pdf_to_page_map_pypdf(file) -> List[Tuple[int, int, str]]:
     """
-    takes a pdf document and turn it into a page map,
-    using pypdf to perform non-OCR extraction
-    by mapping each page into a list, creating a page map
+    Extracts text from a PDF file and returns a page map using PyPDF.
 
     Args:
-        file (UploadFile): The file to be unpacked.
+        file: A file-like object representing the PDF file.
 
     Returns:
-        page_map (list[Tuple[int, int, str]]): a list of pages to be read
-            eg: [(int, int, str)]
-            eg: [({page num base 0},
-            {character position where it starts}, {text content})]
-
+        List[Tuple[int, int, str]]: A list of tuples containing page number, offset, and text content.
     """
-    file.file.seek(0)
-    file_data = file.file.read()
-
-    # Create a BytesIO object from the file data
-    file_stream = BytesIO(file_data)
-    reader = PdfReader(file_stream)
+    file.seek(0)
+    reader = PdfReader(file)
 
     pages_text = []
+    offset = 0
     for page_num, page in enumerate(reader.pages):
         text = page.extract_text() if page.extract_text() is not None else ""
-        pages_text.append((page_num, 0, text))
+        pages_text.append((page_num, offset, text))
+        offset += len(text)
 
     return pages_text
 
 
-def pdf_to_page_map_pymupdf(file: UploadFile) -> List[Tuple[int, int, str]]:
+def pdf_to_page_map_pymupdf(file) -> List[Tuple[int, int, str]]:
     """
-    takes a pdf document and turn it into a page map,
-    using PyMuPDF (aka Pyfitz) to perform non-OCR extraction
-    by mapping each page into a list, creating a page map
+    Extracts text from a PDF file and returns a page map using PyMuPDF.
 
     Args:
-        file (UploadFile): The file to be unpacked.
+        file: A file-like object representing the PDF file.
 
     Returns:
-        page_map (list[Tuple[int, int, str]]): a list of pages to be read
-            eg: [(int, int, str)]
-            eg: [({page num base 0},
-            {character position where it starts}, {text content})]
-
+        List[Tuple[int, int, str]]: A list of tuples containing page number, offset, and text content.
     """
-    file.file.seek(0)
-    file_data = file.file.read()
-
-    # Create a BytesIO object from the file data
-    file_stream = BytesIO(file_data)
-
-    pdf_document = fitz.open(stream=file_stream, filetype="pdf")
+    file.seek(0)
+    pdf_document = fitz.open(stream=file.read(), filetype="pdf")
 
     pages_text = []
+    offset = 0
     for page_num in range(len(pdf_document)):
         page = pdf_document[page_num]
         text = page.get_text("text")
-        pages_text.append((page_num, 0, text))
+        pages_text.append((page_num, offset, text))
+        offset += len(text)
 
     pdf_document.close()
 
     return pages_text
 
 
-def extract_csv(file: UploadFile, csv_header) -> List[Dict]:
+def extract_csv(file, csv_header) -> List[Dict]:
     """
-    convert the csv into a list of dict,
-    while each dict representing a column, always return a dictionary of
-    strings.
+    Converts a CSV file into a list of dictionaries, each representing a row.
 
-    args:
-        file (UploadFile): the file to be extracted
-        csv_header (bool): whether the csv contains a header
+    Args:
+        file: A file-like object representing the CSV file.
+        csv_header (bool): Whether the CSV contains a header row.
 
-    return:
-        (List[Dict]):
-            a dict representation of a csv, if csv_header is True:
-            [
-                {"i_title": "Issue1", "s_title": "Solution1", "e_title": "Extra1"},
-                {"i_title": "Issue2", "s_title": "Solution2", "e_title": "Extra2"},
-                {"i_title": "Issue3", "s_title": "Solution3", "e_title": "Extra3"},
-            ]
-            if csv_header is False (kn are column names generated):
-            [
-                {"k0": "i_title", "k1": "s_title", "k2": "e_title"},
-                {"k0": "Issue1", "k1": "Solution1", "k2": "Extra1"},
-                {"k0": "Issue2", "k1": "Solution2", "k2": "Extra2"},
-                {"k0": "Issue3", "k1": "Solution3", "k2": "Extra3"},
-            ]
+    Returns:
+        List[Dict]: A list of dictionaries representing the CSV data.
     """
-    csvdf = pd.read_csv(file.file, encoding="utf-8", header=0 if csv_header else None)
-
+    file.seek(0)
+    csvdf = pd.read_csv(file, encoding="utf-8", header=0 if csv_header else None)
     record = csvdf.to_dict(orient="records")
 
-    # convert all int keys to string - 0 -> "k0" for mapping later
-    return (
-        record if csv_header else [{f"k{k}": v for k, v in d.items()} for d in record]
-    )
+    # Convert all integer keys to strings (e.g., 0 -> "k0")
+    if not csv_header:
+        record = [{f"k{k}": v for k, v in d.items()} for d in record]
+
+    return record

@@ -99,18 +99,20 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     await update.message.chat.send_action(action=ChatAction.TYPING)
 
     try:
+        # processing the file
         file = await photo.get_file()
         file_path = tempfile.mktemp()
-
         await file.download_to_drive(file_path)
+
         extracted_text: str = analyze_image(file_path)
         subjects: List[str] = db.get_user_subjects(user_id)
-
         history: List[Dict[str, str]] = db.get_chat_history(user_id)
+
         bot_response: str = call_openai(
             history,
             qa_prompt_img.format(subject=", ".join(subjects), query=extracted_text),
         )
+
     except Exception as e:
         bot_response = f"Error processing image: {e}"
 
