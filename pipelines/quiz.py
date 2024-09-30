@@ -12,7 +12,7 @@ from telegram.ext import (
 )
 
 from llms.openai import call_openai
-from llms.prompt import system_prompt
+from llms.prompt import quiz_prompt
 from pipelines.db import db
 from pipelines.utils import send_main_menu
 
@@ -51,7 +51,7 @@ async def quiz_get_question(update: Update, context: CallbackContext):
     # Randomly select a subject
     subject = random.choice(subjects)
 
-    prompt = system_prompt.format(subject=subject)
+    prompt = quiz_prompt.format(subject=subject)
     bot_response = call_openai([], prompt)
 
     # Remove any code fences from the response

@@ -7,6 +7,7 @@ async def send_main_menu(update: Update, response: str = "Please choose an optio
         [KeyboardButton("Select Subject")],
         [KeyboardButton("Quiz")],
         [KeyboardButton("Configuration")],
+        [KeyboardButton("Q&A")],
     ]
     reply_markup = ReplyKeyboardMarkup(
         keyboard, one_time_keyboard=True, resize_keyboard=True

@@ -7,7 +7,7 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from llms.openai import call_openai
-from llms.prompt import system_prompt
+from llms.prompt import qa_prompt
 from tools.form_recognizer import analyze_image
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
@@ -39,7 +39,6 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     Returns:
         None
     """
-    user: User = update.message.from_user
     user_message: str = update.message.text.strip()
 
     await update.message.chat.send_action(action=ChatAction.TYPING)
@@ -48,7 +47,7 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         history: List[
             Dict[str, str]
         ] = []  # Replace with actual retrieval from the database
-        bot_response: str = call_openai(history, user, user_message, system_prompt)
+        bot_response: str = call_openai(history, user_message, qa_prompt)
     except Exception as e:
         bot_response = f"Error processing your request: {e}"
 
@@ -80,7 +79,7 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         history: List[
             Dict[str, str]
         ] = []  # Replace with actual retrieval from the database
-        bot_response: str = call_openai(history, user, extracted_text, system_prompt)
+        bot_response: str = call_openai(history, user, extracted_text, qa_prompt)
     except Exception as e:
         bot_response = f"Error processing image: {e}"
 

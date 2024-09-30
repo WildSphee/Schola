@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, Literal
 
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
@@ -97,16 +97,20 @@ async def handle_default_pipeline(
         None
     """
     user_id = str(user.id)
-    if user_message.lower() == "select subject":
+    menu_selection: Literal["select subject", "quiz", "configuration", "q&a"] = (
+        user_message.lower()
+    )
+
+    if menu_selection == "select subject":
         db.set_user_pipeline(user_id, "select_subject")
         await send_subject_menu(update, user)
-    elif user_message.lower() == "quiz":
+    elif menu_selection == "quiz":
         # Start the quiz conversation
         return await quiz_start(update, context)
-    elif user_message.lower() == "configuration":
+    elif menu_selection == "configuration":
         db.set_user_pipeline(user_id, "configuration")
         await handle_configuration_pipeline(update, context, user, user_message)
-    elif user_message.lower() == "q&a":
+    elif menu_selection == "q&a":
         db.set_user_pipeline(user_id, "qa")
         await qa_start(update, context)
     else:
