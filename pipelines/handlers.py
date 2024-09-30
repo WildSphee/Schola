@@ -54,15 +54,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.message.from_user
     user_id = str(user.id)
     user_message: str = update.message.text.strip()
-    # Get the user's current pipeline
     current_pipeline: str = db.get_user_pipeline(user_id)
 
-    # If no pipeline is set, default to 'default'
     if not current_pipeline:
         current_pipeline = "default"
         db.set_user_pipeline(user_id, current_pipeline)
 
-    # Check for 'Back to Main Menu' command
     if user_message.lower() == "back to main menu":
         db.set_user_pipeline(user_id, "default")
         await send_main_menu(update)
