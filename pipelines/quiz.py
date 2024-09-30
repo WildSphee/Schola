@@ -25,7 +25,6 @@ async def quiz_start(update: Update, context: CallbackContext):
     user = update.message.from_user
     user_id = str(user.id)
 
-    # Get user's selected subjects
     subjects = db.get_user_subjects(user_id)
     if not subjects:
         await update.message.reply_text(
