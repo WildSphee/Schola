@@ -2,7 +2,8 @@ import os
 import tempfile
 from typing import Dict, List
 
-from telegram import ChatAction, Update, User
+from telegram import Update, User
+from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from llms.openai import call_openai

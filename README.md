@@ -42,7 +42,7 @@ Create a `.env` file in the root directory to store your environment variables:
 
 ```env
 OPENAI_API_KEY=<your openai api key>
-TELEGRAM_BOT_TOKEN=<your telegram bot token>
+TELEGRAM_EXAM_BOT_TOKEN=<your telegram bot token>
 
 # Azure Form Recognizer
 AZURE_FORM_RECOGNIZER_KEY=<your form recognizer key>

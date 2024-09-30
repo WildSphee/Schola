@@ -11,14 +11,14 @@ from pipelines.db import db
 from pipelines.handlers import echo, start_command
 from pipelines.quiz import quiz_conversation_handler
 
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
 
-def main() -> None:
+def main():
     """Start the bot."""
     if TOKEN is None:
         print(
-            "No token found. Please set TELEGRAM_BOT_TOKEN in your environment variables."
+            "No token found. Please set TELEGRAM_EXAM_BOT_TOKEN in your environment variables."
         )
         return
 
