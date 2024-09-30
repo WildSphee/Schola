@@ -21,15 +21,15 @@ def analyze_image(image_path: str) -> str:
         ValueError: If the Azure Form Recognizer endpoint or key is not set.
     """
 
-    client = DocumentAnalysisClient(
-        endpoint=AZURE_FORM_RECOGNIZER_ENDPOINT,
-        credential=AzureKeyCredential(AZURE_FORM_RECOGNIZER_KEY),
-    )
-
     if not AZURE_FORM_RECOGNIZER_ENDPOINT or not AZURE_FORM_RECOGNIZER_KEY:
         raise ValueError(
             "Azure Form Recognizer endpoint and key must be set as environment variables."
         )
+
+    client = DocumentAnalysisClient(
+        endpoint=AZURE_FORM_RECOGNIZER_ENDPOINT,
+        credential=AzureKeyCredential(AZURE_FORM_RECOGNIZER_KEY),
+    )
 
     with open(image_path, "rb") as image:
         poller = client.begin_analyze_document("prebuilt-read", image)
