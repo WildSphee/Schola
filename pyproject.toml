@@ -17,6 +17,8 @@ pandas = "^2.2.3"
 azure-ai-formrecognizer = "^3.3.3"
 pydantic = "^2.9.2"
 replicate = "^0.34.1"
+faiss-cpu = "1.7.4"
+numpy = "^2.1.1"
 
 
 [tool.poetry.group.dev.dependencies]
