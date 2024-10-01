@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "schola"
 version = "0.1.0"
-description = "Student-Centric Hub for Online Learning Assistant"
+description = "Student-Centric Hub Online Learning Assistant"
 authors = ["Reagan <rrr.chanhiulok@gmail.com>"]
 license = "Proprietary"
 readme = "README.md"

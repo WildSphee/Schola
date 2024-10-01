@@ -1,6 +1,6 @@
 # Schola
 
-## Student-Centric Hub for Online Learning Assistant
+## Student-Centric Hub Online Learning Assistant
 
 Schola is a Telegram chatbot designed to assist students in their learning journey. Leveraging OpenAI's language models, Schola allows students to select their subject, take a picture of a question or ask questions directly, and receive detailed answers along with the correct page numbers and references.
 
