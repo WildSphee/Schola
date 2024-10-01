@@ -42,3 +42,14 @@ Image OCR:
 {query}
 ```
 """
+
+qa_prompt_voice = """
+You are answering questions about the subject(s) of {subject}. Answer professionally and concisely. 
+The query is transcribed from voice message and there might be ambiguity in wordings. 
+Try your best to give guidance for the users questions and answer with explanations.
+
+Voice Transcripted question:
+```
+{query}
+```
+"""

@@ -17,4 +17,4 @@ def transcribe_voice(file_path: str) -> str:
             model="whisper-1", file=audio_file
         )
 
-    return transcript["text"]
+    return transcript.text

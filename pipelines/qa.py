@@ -12,10 +12,11 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from llms.openai import call_openai
-from llms.prompt import qa_prompt_img, qa_prompt_msg
+from llms.prompt import qa_prompt_img, qa_prompt_msg, qa_prompt_voice
 from pipelines.db import db
 from pipelines.utils import send_main_menu
 from tools.form_recognizer import analyze_image
+from tools.whisper import transcribe_voice
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
@@ -115,6 +116,49 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     except Exception as e:
         bot_response = f"Error processing image: {e}"
+
+    await update.message.reply_text(
+        bot_response,
+        reply_markup=ReplyKeyboardMarkup(
+            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+        ),
+    )
+
+
+async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle voices sent by the user during the Q&A pipeline; perform transcription and respond.
+
+    Args:
+        update (Update): Incoming Telegram update.
+        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
+
+    Returns:
+        None
+    """
+    user: User = update.message.from_user
+    user_id = str(user.id)
+
+    voice = update.message.voice
+    file = await voice.get_file()
+    file_path = tempfile.mktemp(suffix=".ogg")
+
+    await update.message.chat.send_action(action=ChatAction.TYPING)
+
+    try:
+        await file.download_to_drive(file_path)
+
+        transcribed_text = transcribe_voice(file_path)
+        subjects: List[str] = db.get_user_subjects(user_id)
+        history: List[Dict[str, str]] = db.get_chat_history(user_id)
+
+        bot_response: str = call_openai(
+            history,
+            qa_prompt_voice.format(subject=", ".join(subjects), query=transcribed_text),
+        )
+
+    except Exception as e:
+        await update.message.reply_text(f"Error processing voice message: {e}")
 
     await update.message.reply_text(
         bot_response,

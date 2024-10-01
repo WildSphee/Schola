@@ -1,4 +1,3 @@
-import tempfile
 from typing import Any, Literal
 
 from telegram import (
@@ -7,16 +6,14 @@ from telegram import (
     ReplyKeyboardRemove,
     Update,
 )
-from telegram.constants import ChatAction
 from telegram.ext import (
     ContextTypes,
 )
 
 from pipelines.db import db
-from pipelines.qa import qa_image_handler, qa_start, qa_text_handler
+from pipelines.qa import qa_image_handler, qa_start, qa_text_handler, qa_voice_handler
 from pipelines.quiz import quiz_start
 from pipelines.utils import send_main_menu, send_subject_menu
-from tools.whisper import transcribe_voice
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -220,21 +217,6 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     current_pipeline: str = db.get_user_pipeline(user_id)
 
     if current_pipeline == "qa":
-        voice = update.message.voice
-        file = await voice.get_file()
-        file_path = tempfile.mktemp(suffix=".ogg")
-
-        await update.message.chat.send_action(action=ChatAction.TYPING)
-
-        try:
-            await file.download_to_drive(file_path)
-
-            # STT using whisper
-            transcribed_text = transcribe_voice(file_path)
-            update.message.text = transcribed_text
-
-            await qa_text_handler(update, context)
-        except Exception as e:
-            await update.message.reply_text(f"Error processing voice message: {e}")
+        await qa_voice_handler(update, context)
     else:
         await update.message.reply_text("Please send voice messages only in Q&A mode.")
