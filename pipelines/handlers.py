@@ -15,8 +15,8 @@ from pipelines.qa_pipeline import (
 )
 from pipelines.quiz_pipeline import handle_quiz_pipeline
 from pipelines.subject_select_pipeline import handle_subject_select_pipeline
-from pipelines.utils import send_main_menu
 from resources.languages import en as lang
+from utils.keyboard_markup import send_main_menu
 
 
 async def handle_start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -61,7 +61,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         current_pipeline = "default"
         db.set_user_pipeline(user_id, current_pipeline)
 
-    if user_message.lower() == lang.back_to_main:
+    if user_message == lang.back_to_main:
         db.set_user_pipeline(user_id, "default")
         await send_main_menu(update)
         return

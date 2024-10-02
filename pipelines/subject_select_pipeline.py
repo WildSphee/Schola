@@ -11,8 +11,8 @@ from telegram.ext import (
 )
 
 from pipelines.db import db
-from pipelines.utils import send_main_menu, send_subject_menu
 from resources.languages import en as lang
+from utils.keyboard_markup import send_main_menu, send_subject_menu
 
 
 async def handle_subject_select_pipeline(
@@ -39,7 +39,7 @@ async def handle_subject_select_pipeline(
         lang.done_selecting,
     ]
     if user_message in valid_subjects:
-        if user_message.lower() == lang.done_selecting:
+        if user_message == lang.done_selecting:
             db.set_user_pipeline(user_id, "default")
             await update.message.reply_text(
                 "Subjects saved.", reply_markup=ReplyKeyboardRemove()

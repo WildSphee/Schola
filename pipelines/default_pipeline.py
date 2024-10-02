@@ -11,8 +11,8 @@ from pipelines.config_pipeline import handle_configuration_pipeline
 from pipelines.db import db
 from pipelines.qa_pipeline import qa_start
 from pipelines.quiz_pipeline import handle_quiz_pipeline
-from pipelines.utils import send_subject_menu
 from resources.languages import en as lang
+from utils.keyboard_markup import send_subject_menu
 
 
 async def handle_default_pipeline(

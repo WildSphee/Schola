@@ -11,10 +11,9 @@ from telegram.ext import (
 from llms.openai import call_openai
 from llms.prompt import quiz_prompt
 from pipelines.db import db
-from pipelines.utils import send_main_menu
 from resources.languages import en as lang
+from utils.keyboard_markup import send_main_menu
 
-QUIZ_QUESTION = 0
 
 
 async def generate_question(update: Update, context: CallbackContext):
@@ -84,17 +83,21 @@ async def generate_question(update: Update, context: CallbackContext):
 
 async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
-    user_answer = update.message.text.strip().lower()
-    valid_options = ["a", "b", "c", "d"]
+    user_answer = update.message.text
+    valid_options = ["A", "B", "C", "D"]
 
     # If the user have NOT generated a question - they will not have correct_option data
     if user_answer == lang.next_question or not context.user_data.get("correct_option"):
         await generate_question(update, context)
-        return QUIZ_QUESTION
+        return 
 
     if user_answer == lang.back_to_main:
+        # reset user data for quiz
+        context.user_data["correct_option"] = None
+        context.user_data["explanation"] = None
+        db.set_user_pipeline(update.message.from_user.id, "default")
         await send_main_menu(update)
-        return ConversationHandler.END
+        return
 
     if user_answer not in valid_options:
         await update.message.reply_text(
@@ -105,7 +108,7 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
                 resize_keyboard=True,
             ),
         )
-        return QUIZ_QUESTION
+        return 
 
     # Retrieve the correct answer and explanation
     correct_option = context.user_data.get("correct_option")
@@ -129,4 +132,3 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
         ),
     )
 
-    return QUIZ_QUESTION
