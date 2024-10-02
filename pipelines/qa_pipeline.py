@@ -21,7 +21,7 @@ from tools.whisper import transcribe_voice
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
 
-async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Start the Q&A pipeline by sending a welcome message.
 
@@ -29,19 +29,17 @@ async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         update (Update): Incoming Telegram update.
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
-    Returns:
-        None
     """
     bot_response: str = "You are now in the Q&A mode. You can ask questions or send images for analysis."
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
         ),
     )
 
 
-async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle text messages during the Q&A pipeline.
 
@@ -49,14 +47,12 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         update (Update): Incoming Telegram update.
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
-    Returns:
-        None
     """
     user = update.message.from_user
     user_id = str(user.id)
     user_message: str = update.message.text.strip()
 
-    if user_message.lower() == "back to main menu":
+    if user_message.lower() == "🏠 back to main menu":
         db.set_user_pipeline(user_id, "default")
         await send_main_menu(update)
         return
@@ -77,12 +73,12 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
         ),
     )
 
 
-async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle images sent by the user during the Q&A pipeline; perform OCR and respond.
 
@@ -90,8 +86,6 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         update (Update): Incoming Telegram update.
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
-    Returns:
-        None
     """
     user: User = update.message.from_user
     user_id = str(user.id)
@@ -120,12 +114,12 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
         ),
     )
 
 
-async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle voices sent by the user during the Q&A pipeline; perform transcription and respond.
 
@@ -133,8 +127,6 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         update (Update): Incoming Telegram update.
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
-    Returns:
-        None
     """
     user: User = update.message.from_user
     user_id = str(user.id)
@@ -163,6 +155,6 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
         ),
     )

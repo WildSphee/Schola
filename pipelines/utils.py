@@ -4,10 +4,10 @@ from telegram import KeyboardButton, ReplyKeyboardMarkup, Update
 async def send_main_menu(update: Update, response: str = "Please choose an option:"):
     """Send the main menu to the user."""
     keyboard = [
-        [KeyboardButton("Select Subject")],
-        [KeyboardButton("Quiz")],
-        [KeyboardButton("Configuration")],
-        [KeyboardButton("Q&A")],
+        [KeyboardButton("📚 Select Subject")],
+        [KeyboardButton("📝 Quiz")],
+        [KeyboardButton("⚙️ Configuration")],
+        [KeyboardButton("❓ Q&A")],
     ]
     reply_markup = ReplyKeyboardMarkup(
         keyboard, one_time_keyboard=True, resize_keyboard=True
@@ -17,7 +17,7 @@ async def send_main_menu(update: Update, response: str = "Please choose an optio
 
 async def send_subject_menu(update: Update):
     """Send the subject selection menu."""
-    subjects = ["Math", "Science", "History", "English", "Done Selecting Subjects"]
+    subjects = ["Math", "Science", "History", "English", "🏠 Done Selecting Subjects"]
     keyboard = [[KeyboardButton(subject)] for subject in subjects]
     reply_markup = ReplyKeyboardMarkup(
         keyboard, one_time_keyboard=True, resize_keyboard=True

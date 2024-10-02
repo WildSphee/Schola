@@ -20,32 +20,19 @@ from pipelines.utils import send_main_menu
 QUIZ_QUESTION = 0
 
 
-async def quiz_start(update: Update, context: CallbackContext):
-    """Start the quiz by checking if the user has selected subjects."""
+async def generate_question(update: Update, context: CallbackContext):
+    """Generate and present a quiz question to the user."""
     user = update.message.from_user
     user_id = str(user.id)
-
     subjects = db.get_user_subjects(user_id)
     if not subjects:
         await update.message.reply_text(
             "You haven't selected any subjects yet. Please select subjects first.",
             reply_markup=ReplyKeyboardMarkup(
-                [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+                [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
             ),
         )
         return ConversationHandler.END
-
-    # Store subjects in context for later use
-    context.user_data["subjects"] = subjects
-
-    await quiz_get_question(update, context)
-
-    return QUIZ_QUESTION
-
-
-async def quiz_get_question(update: Update, context: CallbackContext):
-    """Generate and present a quiz question to the user."""
-    subjects = context.user_data.get("subjects")
 
     # Randomly select a subject
     subject = random.choice(subjects)
@@ -74,7 +61,7 @@ async def quiz_get_question(update: Update, context: CallbackContext):
         await update.message.reply_text(
             "Sorry, there was an error generating the quiz question. Please try again.",
             reply_markup=ReplyKeyboardMarkup(
-                [[KeyboardButton("Back to Main Menu")]], resize_keyboard=True
+                [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
             ),
         )
         return ConversationHandler.END
@@ -89,24 +76,24 @@ async def quiz_get_question(update: Update, context: CallbackContext):
     await update.message.reply_text(
         message,
         reply_markup=ReplyKeyboardMarkup(
-            [["A", "B", "C", "D"], [KeyboardButton("Back to Main Menu")]],
+            [["A", "B", "C", "D"], [KeyboardButton("🏠 Back to Main Menu")]],
             one_time_keyboard=True,
             resize_keyboard=True,
         ),
     )
 
 
-async def quiz_check_answer(update: Update, context: CallbackContext):
+async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
-    user_answer = update.message.text.strip().upper()
-    valid_options = ["A", "B", "C", "D"]
+    user_answer = update.message.text.strip().lower()
+    valid_options = ["a", "b", "c", "d"]
 
-    if user_answer == "NEXT QUESTION":
+    if user_answer == "➡️ next question":
         # Generate and send the next question
-        await quiz_get_question(update, context)
+        await generate_question(update, context)
         return QUIZ_QUESTION
 
-    if user_answer == "BACK TO MAIN MENU":
+    if user_answer == "🏠 back to main menu":
         await send_main_menu(update)
         return ConversationHandler.END
 
@@ -114,7 +101,7 @@ async def quiz_check_answer(update: Update, context: CallbackContext):
         await update.message.reply_text(
             "Please select a valid option: A, B, C, or D.",
             reply_markup=ReplyKeyboardMarkup(
-                [["A", "B", "C", "D"], [KeyboardButton("Back to Main Menu")]],
+                [["A", "B", "C", "D"], [KeyboardButton("🏠 Back to Main Menu")]],
                 one_time_keyboard=True,
                 resize_keyboard=True,
             ),
@@ -125,47 +112,21 @@ async def quiz_check_answer(update: Update, context: CallbackContext):
     correct_option = context.user_data.get("correct_option")
     explanation = context.user_data.get("explanation")
 
-    if user_answer == correct_option:
-        await update.message.reply_text(
-            "Correct! 🎉",
-            reply_markup=ReplyKeyboardMarkup(
-                [
-                    [KeyboardButton("Next Question")],
-                    [KeyboardButton("Back to Main Menu")],
-                ],
-                resize_keyboard=True,
-            ),
-        )
-    else:
-        await update.message.reply_text(
-            f"Incorrect. The correct answer is {correct_option}.\n\nExplanation: {explanation}",
-            reply_markup=ReplyKeyboardMarkup(
-                [
-                    [KeyboardButton("Next Question")],
-                    [KeyboardButton("Back to Main Menu")],
-                ],
-                resize_keyboard=True,
-            ),
-        )
+    reply: str = (
+        "Correct! 🎉"
+        if user_answer == correct_option
+        else ""
+        f"Incorrect. The correct answer is {correct_option}.\n\nExplanation: {explanation}"
+    )
+    await update.message.reply_text(
+        reply,
+        reply_markup=ReplyKeyboardMarkup(
+            [
+                [KeyboardButton("➡️ Next Question")],
+                [KeyboardButton("🏠 Back to Main Menu")],
+            ],
+            resize_keyboard=True,
+        ),
+    )
 
     return QUIZ_QUESTION
-
-
-async def stop_quiz(update: Update, context: CallbackContext):
-    """End the quiz conversation."""
-    await update.message.reply_text(
-        "Quiz ended. Returning to main menu.", reply_markup=ReplyKeyboardRemove()
-    )
-    return ConversationHandler.END
-
-
-# Define the quiz conversation handler
-quiz_conversation_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex("^Quiz$"), quiz_start)],
-    states={
-        QUIZ_QUESTION: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, quiz_check_answer)
-        ],
-    },
-    fallbacks=[CommandHandler("stop", stop_quiz)],
-)

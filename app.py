@@ -7,8 +7,13 @@ from telegram.ext import (
     filters,
 )
 
-from pipelines.handlers import echo, handle_photo, handle_voice, start_command
-from pipelines.quiz import quiz_conversation_handler
+from pipelines.handlers import (
+    handle_photo,
+    handle_start_command,
+    handle_text,
+    handle_voice,
+)
+from pipelines.quiz_pipeline import quiz_conversation_handler
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
@@ -23,15 +28,15 @@ def main():
 
     application = ApplicationBuilder().token(TOKEN).build()
 
-    # Add command handlers
-    application.add_handler(CommandHandler("start", start_command))
-
-    # Add message handlers
-    application.add_handler(quiz_conversation_handler)
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    # Media handlers
+    application.add_handler(CommandHandler("start", handle_start_command))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text)
+    )
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     application.add_handler(MessageHandler(filters.VOICE, handle_voice))
 
+    # Start the Telegram chatbot
     application.run_polling()
 
 
