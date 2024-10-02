@@ -2,49 +2,57 @@ import re
 
 
 def parse(text: str, version=2) -> str:
+    return text
+
     """
-    Escapes special characters for Telegram MarkdownV2 formatting.
+    Escapes special characters for Telegram MarkdownV2 formatting,
+    preserving the original Markdown syntax.
 
     Args:
         text (str): The markdown text to be escaped.
-        version (int, optional): The Markdown version (1 or 2). Defaults to 2.
 
     Returns:
-        str: The escaped markdown text.
+        str: The escaped markdown text suitable for Telegram.
     """
-    if version == 1:
-        escape_chars = r"_*\`["
-    elif version == 2:
-        escape_chars = r"_*\[\]()~`>#+-=|{}.!"
-    else:
-        raise ValueError("Markdown version must be either 1 or 2")
+    # List of special characters as per Telegram's MarkdownV2
+    special_chars = r"_*\[\]()~`>#+-=|{}.!"
 
     # Function to escape special characters
-    def replace(match):
+    def escape(match):
         char = match.group(0)
         return "\\" + char
 
-    # Escape special characters
-    pattern = re.compile(f"([{re.escape(escape_chars)}])")
-    text = pattern.sub(replace, text)
+    # Escape backslashes first
+    text = re.sub(r"\\", r"\\\\", text)
 
-    # Handle code and pre-formatted text blocks
-    text = re.sub(
-        r"(?P<delim>`+)(?P<code>.*?)\1",
-        lambda m: m.group("delim")
-        + m.group("code").replace("\\", "\\\\").replace("`", "\\`")
-        + m.group("delim"),
-        text,
-        flags=re.DOTALL,
+    # Handle code and pre-formatted text blocks separately
+    # Regex pattern to find code blocks and inline code
+    pattern = re.compile(
+        r"""
+        (```.*?```) |    # Code blocks with triple backticks
+        (`.*?`)          # Inline code with single backticks
+    """,
+        re.DOTALL | re.VERBOSE,
     )
 
-    text = re.sub(
-        r"(?P<delim>```)(?P<code>.*?)(?P=delim)",
-        lambda m: m.group("delim")
-        + m.group("code").replace("\\", "\\\\").replace("`", "\\`")
-        + m.group("delim"),
-        text,
-        flags=re.DOTALL,
-    )
+    # Split the text into code and non-code parts
+    parts = pattern.split(text)
 
-    return text
+    # Process each part
+    for i, part in enumerate(parts):
+        if part is None:
+            continue
+        if pattern.match(part):
+            # Inside code blocks or inline code, escape only backslashes and backticks
+            part = re.sub(r"\\", r"\\\\", part)
+            part = re.sub(r"`", r"\`", part)
+            parts[i] = part
+        else:
+            # Outside code blocks, escape all special characters
+            part = re.sub(r"([{}])".format(re.escape(special_chars)), escape, part)
+            parts[i] = part
+
+    # Reconstruct the text
+    escaped_text = "".join(parts)
+
+    return escaped_text

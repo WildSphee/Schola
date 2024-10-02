@@ -15,7 +15,6 @@ from resources.languages import en as lang
 from utils.keyboard_markup import send_main_menu
 
 
-
 async def generate_question(update: Update, context: CallbackContext):
     """Generate and present a quiz question to the user."""
     user = update.message.from_user
@@ -89,7 +88,7 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     # If the user have NOT generated a question - they will not have correct_option data
     if user_answer == lang.next_question or not context.user_data.get("correct_option"):
         await generate_question(update, context)
-        return 
+        return
 
     if user_answer == lang.back_to_main:
         # reset user data for quiz
@@ -108,7 +107,7 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
                 resize_keyboard=True,
             ),
         )
-        return 
+        return
 
     # Retrieve the correct answer and explanation
     correct_option = context.user_data.get("correct_option")
@@ -131,4 +130,3 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
             resize_keyboard=True,
         ),
     )
-
