@@ -2,13 +2,10 @@ import json
 import random
 import re
 
-from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import KeyboardButton, ReplyKeyboardMarkup, Update
 from telegram.ext import (
     CallbackContext,
-    CommandHandler,
     ConversationHandler,
-    MessageHandler,
-    filters,
 )
 
 from llms.openai import call_openai

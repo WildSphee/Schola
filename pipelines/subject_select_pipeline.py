@@ -10,8 +10,9 @@ from telegram.ext import (
     ContextTypes,
 )
 
-from pipelines.db import db 
-from pipelines.utils import send_main_menu, send_subject_menu 
+from pipelines.db import db
+from pipelines.utils import send_main_menu, send_subject_menu
+
 
 async def handle_subject_select_pipeline(
     update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str

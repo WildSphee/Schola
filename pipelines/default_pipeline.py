@@ -6,11 +6,12 @@ from telegram import (
 from telegram.ext import (
     ContextTypes,
 )
-from pipelines.db import db
-from pipelines.utils import send_main_menu, send_subject_menu
-from pipelines.quiz_pipeline import handle_quiz_pipeline
-from pipelines.qa_pipeline import qa_start
+
 from pipelines.config_pipeline import handle_configuration_pipeline
+from pipelines.db import db
+from pipelines.qa_pipeline import qa_start
+from pipelines.quiz_pipeline import handle_quiz_pipeline
+from pipelines.utils import send_subject_menu
 
 
 async def handle_default_pipeline(
@@ -29,9 +30,9 @@ async def handle_default_pipeline(
         None
     """
     user_id = str(user.id)
-    menu_selection: Literal["📚 select subject", "📝 quiz", "⚙️ configuration", "❓ q&a"] = (
-        user_message.lower()
-    )
+    menu_selection: Literal[
+        "📚 select subject", "📝 quiz", "⚙️ configuration", "❓ q&a"
+    ] = user_message.lower()
 
     if menu_selection == "📚 select subject":
         db.set_user_pipeline(user_id, "select_subject")
