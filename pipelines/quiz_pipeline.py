@@ -12,6 +12,7 @@ from llms.openai import call_openai
 from llms.prompt import quiz_prompt
 from pipelines.db import db
 from pipelines.utils import send_main_menu
+from resources.languages import en as lang
 
 QUIZ_QUESTION = 0
 
@@ -23,9 +24,9 @@ async def generate_question(update: Update, context: CallbackContext):
     subjects = db.get_user_subjects(user_id)
     if not subjects:
         await update.message.reply_text(
-            "You haven't selected any subjects yet. Please select subjects first.",
+            lang.pls_select_subject,
             reply_markup=ReplyKeyboardMarkup(
-                [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
+                [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
             ),
         )
         return ConversationHandler.END
@@ -57,7 +58,7 @@ async def generate_question(update: Update, context: CallbackContext):
         await update.message.reply_text(
             "Sorry, there was an error generating the quiz question. Please try again.",
             reply_markup=ReplyKeyboardMarkup(
-                [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
+                [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
             ),
         )
         return ConversationHandler.END
@@ -68,11 +69,13 @@ async def generate_question(update: Update, context: CallbackContext):
 
     # display question & options to the user
     options_text = "\n".join([f"{key}: {value}" for key, value in options.items()])
-    message = f"Here's your question from {subject}:\n\n{question}\n\n{options_text}\n\nPlease select A, B, C, or D."
+    message = lang.mc_format.format(
+        subject=subject, question=question, options_text=options_text
+    )
     await update.message.reply_text(
         message,
         reply_markup=ReplyKeyboardMarkup(
-            [["A", "B", "C", "D"], [KeyboardButton("🏠 Back to Main Menu")]],
+            [["A", "B", "C", "D"], [KeyboardButton(lang.back_to_main)]],
             one_time_keyboard=True,
             resize_keyboard=True,
         ),
@@ -85,19 +88,19 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     valid_options = ["a", "b", "c", "d"]
 
     # If the user have NOT generated a question - they will not have correct_option data
-    if user_answer == "➡️ next question" or not context.user_data.get("correct_option"):
+    if user_answer == lang.next_question or not context.user_data.get("correct_option"):
         await generate_question(update, context)
         return QUIZ_QUESTION
 
-    if user_answer == "🏠 back to main menu":
+    if user_answer == lang.back_to_main:
         await send_main_menu(update)
         return ConversationHandler.END
 
     if user_answer not in valid_options:
         await update.message.reply_text(
-            "Please select a valid option: A, B, C, or D.",
+            lang.pls_select_valid,
             reply_markup=ReplyKeyboardMarkup(
-                [["A", "B", "C", "D"], [KeyboardButton("🏠 Back to Main Menu")]],
+                [["A", "B", "C", "D"], [KeyboardButton(lang.back_to_main)]],
                 one_time_keyboard=True,
                 resize_keyboard=True,
             ),
@@ -109,17 +112,18 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     explanation = context.user_data.get("explanation")
 
     reply: str = (
-        "Correct! 🎉"
+        lang.correct_ans
         if user_answer == correct_option
-        else ""
-        f"Incorrect. The correct answer is {correct_option}.\n\nExplanation: {explanation}"
+        else lang.incorrect_ans.format(
+            correct_option=correct_option, explanation=explanation
+        )
     )
     await update.message.reply_text(
         reply,
         reply_markup=ReplyKeyboardMarkup(
             [
-                [KeyboardButton("➡️ Next Question")],
-                [KeyboardButton("🏠 Back to Main Menu")],
+                [KeyboardButton(lang.next_question)],
+                [KeyboardButton(lang.back_to_main)],
             ],
             resize_keyboard=True,
         ),

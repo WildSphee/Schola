@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any
 
 from telegram import (
     Update,
@@ -12,10 +12,11 @@ from pipelines.db import db
 from pipelines.qa_pipeline import qa_start
 from pipelines.quiz_pipeline import handle_quiz_pipeline
 from pipelines.utils import send_subject_menu
+from resources.languages import en as lang
 
 
 async def handle_default_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str
+    update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, menu_selection: str
 ) -> None:
     """
     Handle the default pipeline where the user selects a pipeline.
@@ -24,26 +25,23 @@ async def handle_default_pipeline(
         update (Update): Incoming Telegram update.
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
         user (Any): The user object from the message.
-        user_message (str): The message text sent by the user.
+        menu_selection (str): The message text sent by the user.
 
     Returns:
         None
     """
     user_id = str(user.id)
-    menu_selection: Literal[
-        "📚 select subject", "📝 quiz", "⚙️ configuration", "❓ q&a"
-    ] = user_message.lower()
 
-    if menu_selection == "📚 select subject":
+    if menu_selection == lang.select_subject:
         db.set_user_pipeline(user_id, "select_subject")
         await send_subject_menu(update)
-    elif menu_selection == "📝 quiz":
+    elif menu_selection == lang.quiz:
         db.set_user_pipeline(user_id, "quiz")
         return await handle_quiz_pipeline(update, context)
-    elif menu_selection == "⚙️ configuration":
+    elif menu_selection == lang.configuration:
         db.set_user_pipeline(user_id, "configuration")
-        await handle_configuration_pipeline(update, context, user, user_message)
-    elif menu_selection == "❓ q&a":
+        await handle_configuration_pipeline(update, context, user, menu_selection)
+    elif menu_selection == lang.qa:
         db.set_user_pipeline(user_id, "qa")
         await qa_start(update, context)
     else:

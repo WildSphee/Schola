@@ -16,6 +16,7 @@ from pipelines.qa_pipeline import (
 from pipelines.quiz_pipeline import handle_quiz_pipeline
 from pipelines.subject_select_pipeline import handle_subject_select_pipeline
 from pipelines.utils import send_main_menu
+from resources.languages import en as lang
 
 
 async def handle_start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -31,7 +32,7 @@ async def handle_start_command(update: Update, context: ContextTypes.DEFAULT_TYP
     """
     user = update.message.from_user
     user_id = str(user.id)
-    bot_response = f"Hello {user.first_name}! I am Schola, your learning assistant. 😊"
+    bot_response = lang.schola_intro.format(name=user.first_name)
 
     db.set_user_pipeline(user_id, "default")
     db.clear_user_subjects(user_id)
@@ -60,7 +61,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         current_pipeline = "default"
         db.set_user_pipeline(user_id, current_pipeline)
 
-    if user_message.lower() == "🏠 back to main menu":
+    if user_message.lower() == lang.back_to_main:
         db.set_user_pipeline(user_id, "default")
         await send_main_menu(update)
         return
@@ -98,7 +99,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if current_pipeline == "qa":
         await qa_image_handler(update, context)
     else:
-        await update.message.reply_text("Please send images only in Q&A mode.")
+        await update.message.reply_text(lang.image_debug)
 
 
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -119,4 +120,4 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if current_pipeline == "qa":
         await qa_voice_handler(update, context)
     else:
-        await update.message.reply_text("Please send voice messages only in Q&A mode.")
+        await update.message.reply_text(lang.voice_debug)

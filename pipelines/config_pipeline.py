@@ -9,6 +9,8 @@ from telegram.ext import (
     ContextTypes,
 )
 
+from resources.languages import en as lang
+
 
 async def handle_configuration_pipeline(
     update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str
@@ -28,6 +30,6 @@ async def handle_configuration_pipeline(
     await update.message.reply_text(
         "Configuration settings are not implemented yet.",
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
         ),
     )

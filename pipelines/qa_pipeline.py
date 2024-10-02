@@ -15,6 +15,7 @@ from llms.openai import call_openai
 from llms.prompt import qa_prompt_img, qa_prompt_msg, qa_prompt_voice
 from pipelines.db import db
 from pipelines.utils import send_main_menu
+from resources.languages import en as lang
 from tools.form_recognizer import analyze_image
 from tools.whisper import transcribe_voice
 
@@ -30,11 +31,11 @@ async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
     """
-    bot_response: str = "You are now in the ❓ Q&A mode. You can ask questions or send images for analysis."
+    bot_response: str = lang.qa_intro
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
         ),
     )
 
@@ -52,7 +53,7 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(user.id)
     user_message: str = update.message.text.strip()
 
-    if user_message.lower() == "🏠 back to main menu":
+    if user_message.lower() == lang.back_to_main:
         db.set_user_pipeline(user_id, "default")
         await send_main_menu(update)
         return
@@ -73,7 +74,7 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
         ),
     )
 
@@ -114,7 +115,7 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
         ),
     )
 
@@ -155,6 +156,6 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
-            [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
+            [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
         ),
     )

@@ -12,6 +12,7 @@ from telegram.ext import (
 
 from pipelines.db import db
 from pipelines.utils import send_main_menu, send_subject_menu
+from resources.languages import en as lang
 
 
 async def handle_subject_select_pipeline(
@@ -35,10 +36,10 @@ async def handle_subject_select_pipeline(
         "Science",
         "History",
         "English",
-        "🏠 Done Selecting Subjects",
+        lang.done_selecting,
     ]
     if user_message in valid_subjects:
-        if user_message.lower() == "🏠 done selecting subjects":
+        if user_message.lower() == lang.done_selecting:
             db.set_user_pipeline(user_id, "default")
             await update.message.reply_text(
                 "Subjects saved.", reply_markup=ReplyKeyboardRemove()
@@ -47,13 +48,13 @@ async def handle_subject_select_pipeline(
         else:
             db.add_user_subject(user_id, user_message)
             await update.message.reply_text(
-                f"Added {user_message} to your subjects. You can select more or choose '🏠 Done Selecting Subjects'."
+                f"Added {user_message} to your subjects. You can select more or choose '{lang.done_selecting}'."
             )
             await send_subject_menu(update)
     else:
         await update.message.reply_text(
             "Please select a subject from the list.",
             reply_markup=ReplyKeyboardMarkup(
-                [[KeyboardButton("🏠 Back to Main Menu")]], resize_keyboard=True
+                [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
             ),
         )
