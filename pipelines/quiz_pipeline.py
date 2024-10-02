@@ -13,7 +13,6 @@ from llms.prompt import quiz_prompt
 from pipelines.db import db
 from pipelines.utils import send_main_menu
 
-# Conversation state for the quiz
 QUIZ_QUESTION = 0
 
 
@@ -85,8 +84,8 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     user_answer = update.message.text.strip().lower()
     valid_options = ["a", "b", "c", "d"]
 
+    # If the user have NOT generated a question - they will not have correct_option data
     if user_answer == "➡️ next question" or not context.user_data.get("correct_option"):
-        # Generate and send the next question
         await generate_question(update, context)
         return QUIZ_QUESTION
 

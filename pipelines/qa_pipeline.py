@@ -30,7 +30,7 @@ async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
     """
-    bot_response: str = "You are now in the Q&A mode. You can ask questions or send images for analysis."
+    bot_response: str = "You are now in the ❓ Q&A mode. You can ask questions or send images for analysis."
     await update.message.reply_text(
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
