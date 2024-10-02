@@ -88,7 +88,7 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     user_answer = update.message.text.strip().lower()
     valid_options = ["a", "b", "c", "d"]
 
-    if user_answer == "➡️ next question":
+    if user_answer == "➡️ next question" or not context.user_data.get("correct_option"):
         # Generate and send the next question
         await generate_question(update, context)
         return QUIZ_QUESTION

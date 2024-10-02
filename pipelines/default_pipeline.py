@@ -38,7 +38,7 @@ async def handle_default_pipeline(
         await send_subject_menu(update)
     elif menu_selection == "📝 quiz":
         db.set_user_pipeline(user_id, "quiz")
-        return await (update, context)
+        return await handle_quiz_pipeline(update, context)
     elif menu_selection == "⚙️ configuration":
         db.set_user_pipeline(user_id, "configuration")
         await handle_configuration_pipeline(update, context, user, user_message)

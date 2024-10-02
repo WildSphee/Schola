@@ -13,7 +13,6 @@ from pipelines.handlers import (
     handle_text,
     handle_voice,
 )
-from pipelines.quiz_pipeline import quiz_conversation_handler
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
