@@ -12,7 +12,7 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from llms.openai import call_openai
-from llms.prompt import qa_prompt_img, qa_prompt_msg, qa_prompt_voice
+from resources.prompt import qa_prompt_img, qa_prompt_msg, qa_prompt_voice
 from pipelines.db import db
 from resources.languages import en as lang
 from tools.form_recognizer import analyze_image
