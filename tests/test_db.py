@@ -42,16 +42,18 @@ def test_get_chat_history_empty(db, user):
 def test_clear_chat_history(db, user):
     """Test clearing chat history."""
     db.log_interaction(user, "Hello", "Hi there!")
-    db.clear_chat_history(user)
-    history = db.get_chat_history(str(user.id))
+    user_id = str(user.id)
+    db.clear_chat_history(user_id)
+    history = db.get_chat_history(user_id)
     assert history == []
 
 
 def test_check_user_messages(db, user):
     """Test checking the number of user messages."""
-    assert db.check_user_messages(user) == 0
+    user_id = str(user.id)
+    assert db.check_user_messages(user_id) == 0
     db.log_interaction(user, "Hello", "Hi there!")
-    assert db.check_user_messages(user) == 1
+    assert db.check_user_messages(user_id) == 1
 
 
 def test_set_and_get_user_pipeline(db):

@@ -104,22 +104,22 @@ class DB:
             history.append({"role": "assistant", "content": bot_response or ""})
         return history
 
-    def clear_chat_history(self, user: User) -> None:
+    def clear_chat_history(self, user_id: str) -> None:
         with self.conn:
             self.conn.execute(
                 """
                 DELETE FROM interactions WHERE user_id = ?
                 """,
-                (str(user.id),),
+                (user_id,),
             )
 
-    def check_user_messages(self, user: User) -> int:
+    def check_user_messages(self, user_id: str) -> int:
         cursor = self.conn.cursor()
         cursor.execute(
             """
             SELECT COUNT(*) FROM interactions WHERE user_id = ?
             """,
-            (str(user.id),),
+            (user_id,),
         )
         count = cursor.fetchone()[0]
         return count
