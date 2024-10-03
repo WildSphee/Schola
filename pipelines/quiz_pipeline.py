@@ -9,7 +9,7 @@ from telegram.ext import (
 )
 
 from llms.openai import call_openai
-from pipelines.db import db
+from db.db import db
 from resources.languages import en as lang
 from resources.prompt import quiz_prompt
 from utils.keyboard_markup import send_main_menu

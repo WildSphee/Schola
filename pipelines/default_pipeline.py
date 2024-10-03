@@ -8,7 +8,7 @@ from telegram.ext import (
 )
 
 from pipelines.config_pipeline import handle_configuration_pipeline
-from pipelines.db import db
+from db.db import db
 from pipelines.qa_pipeline import qa_start
 from pipelines.quiz_pipeline import handle_quiz_pipeline
 from resources.languages import en as lang

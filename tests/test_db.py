@@ -3,7 +3,7 @@ import sqlite3
 import pytest
 from telegram import User
 
-from pipelines.db import DB
+from db.db import DB
 
 
 @pytest.fixture

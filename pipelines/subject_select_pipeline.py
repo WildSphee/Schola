@@ -10,7 +10,7 @@ from telegram.ext import (
     ContextTypes,
 )
 
-from pipelines.db import db
+from db.db import db
 from resources.languages import en as lang
 from utils.keyboard_markup import send_main_menu, send_subject_menu
 
