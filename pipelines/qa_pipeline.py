@@ -11,8 +11,8 @@ from telegram import (
 from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
-from llms.openai import call_openai
 from db.db import db
+from llms.openai import call_openai
 from resources.languages import en as lang
 from resources.prompt import qa_prompt_img, qa_prompt_msg, qa_prompt_voice
 from tools.form_recognizer import analyze_image

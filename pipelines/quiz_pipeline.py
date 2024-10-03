@@ -8,8 +8,8 @@ from telegram.ext import (
     ConversationHandler,
 )
 
-from llms.openai import call_openai
 from db.db import db
+from llms.openai import call_openai
 from resources.languages import en as lang
 from resources.prompt import quiz_prompt
 from utils.keyboard_markup import send_main_menu
