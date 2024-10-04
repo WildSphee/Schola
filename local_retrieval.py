@@ -24,7 +24,7 @@ if __name__ == "__main__":
     datasource_name = "my_local_datasource"  # Replace with your datasource name
 
     # Search example
-    query = "pmp artifacts"  # Replace with your search query
+    query = "what is the typical project management life cycle?"  # Replace with your search query
     top_k = 5  # Number of top results to retrieve
 
     print("Performing search...")
