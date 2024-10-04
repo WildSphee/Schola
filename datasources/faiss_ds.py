@@ -8,7 +8,7 @@ import numpy as np
 import openai
 from faiss import read_index
 
-DATASOURCE_YAML_PATH = "datasources/"
+DATASOURCE_PATH = "datasources"
 
 client = openai.OpenAI()
 
@@ -44,14 +44,14 @@ class FAISSDS:
 
         # Read the documents from data.jsonl
         json_name = "meta_data.jsonl"
-        jsonpath = os.path.join(DATASOURCE_YAML_PATH, self.index_name, json_name)
+        jsonpath = os.path.join(DATASOURCE_PATH, self.index_name, json_name)
 
         with open(jsonpath, "r") as fi:
             self.documents = [json.loads(line) for line in fi]
 
         # Load the FAISS index
         index_name = "faiss.index"
-        index_path = os.path.join(DATASOURCE_YAML_PATH, self.index_name, index_name)
+        index_path = os.path.join(DATASOURCE_PATH, self.index_name, index_name)
         self.index = read_index(index_path)
 
     def search_request(self, search_query: str, topk: int, skip: int = 0) -> List[Dict]:
@@ -115,7 +115,7 @@ class FAISSDS:
         keys = [entry["search_key"] for entry in sections]
 
         # Create directory for the index
-        index_dir = Path(DATASOURCE_YAML_PATH) / index_name
+        index_dir = Path(DATASOURCE_PATH) / index_name
         index_dir.mkdir(parents=True, exist_ok=True)
 
         # Save documents to data.jsonl

@@ -20,7 +20,7 @@ from tools.extraction import (
 from .faiss_ds import FAISSDS
 
 # Configurations
-DATASOURCE_YAML_PATH = "datasources"
+DATASOURCE_PATH = "datasources"
 PDF_PAGEMAP_EXTRACTION_METHOD: Literal["AzureFormRecognizer", "PyPDF", "PyMuPDF"] = (
     "AzureFormRecognizer"
 )
@@ -53,7 +53,7 @@ def create_local_dir(datasource_name) -> str:
     """
     Creates a new directory with the provided datasource name under a predefined path.
     """
-    new_dir = pathlib.Path(DATASOURCE_YAML_PATH) / datasource_name
+    new_dir = pathlib.Path(DATASOURCE_PATH) / datasource_name
     new_dir.mkdir(parents=True, exist_ok=True)
     return str(new_dir)
 
@@ -237,7 +237,7 @@ def create_section_csv(
 
 
 def create_upload_file(
-    datasource: str, file_name: str, base_path: str = DATASOURCE_YAML_PATH
+    datasource: str, file_name: str, base_path: str = DATASOURCE_PATH
 ):
     """
     Create an UploadFile object from a specified file path.
