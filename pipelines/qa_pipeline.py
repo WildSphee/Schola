@@ -51,11 +51,10 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
     """
-    user = update.message.from_user
-    user_id = str(user.id)
-    user_message: str = update.message.text.strip()
+    user_id = str(update.message.from_user.id)
+    user_message: str = update.message.text
 
-    if user_message.lower() == lang.back_to_main:
+    if user_message == lang.back_to_main:
         db.set_user_pipeline(user_id, "default")
         await send_main_menu(update)
         return

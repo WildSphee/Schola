@@ -100,7 +100,6 @@ class FAISSDS:
 
         return hits
 
-
     @staticmethod
     def create(section: Iterator[Dict], index_name) -> Dict:
         """

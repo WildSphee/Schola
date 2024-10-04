@@ -15,13 +15,3 @@ async def send_main_menu(update: Update, response: str = "Please choose an optio
         keyboard, one_time_keyboard=True, resize_keyboard=True
     )
     await update.message.reply_text(response, reply_markup=reply_markup)
-
-
-async def send_subject_menu(update: Update):
-    """Send the subject selection menu."""
-    subjects = ["Math", "Science", "History", "English", lang.done_selecting]
-    keyboard = [[KeyboardButton(subject)] for subject in subjects]
-    reply_markup = ReplyKeyboardMarkup(
-        keyboard, one_time_keyboard=True, resize_keyboard=True
-    )
-    await update.message.reply_text(lang.selecting_text, reply_markup=reply_markup)

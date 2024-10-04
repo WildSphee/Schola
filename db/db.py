@@ -296,7 +296,7 @@ class DB:
         return None
 
     def get_subject_info_by_subject_name(
-        self, subject_name: int
+        self, subject_name: str
     ) -> Optional[Dict[str, any]]:
         cursor = self.conn.cursor()
         cursor.execute(
