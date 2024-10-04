@@ -10,6 +10,7 @@ output/
 
 # testing scripts
 testing.py
+testing/
 
 # db
 database.db
