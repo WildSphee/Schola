@@ -87,7 +87,7 @@ class FAISSDS:
             parts = file_loc.split("/")
             ds_name = parts[0] if len(parts) > 0 else ""
             filename = parts[1] if len(parts) > 1 else ""
-            file_url = self.get_ds_file_url(ds_name, filename)
+            file_url = f"/datasource/{ds_name}/{filename}"
 
             hit = {
                 "id": result["id"],
@@ -140,9 +140,3 @@ class FAISSDS:
 
         return {"index_name": index_name}
 
-    def get_ds_file_url(self, ds_name, filename):
-        """
-        Generate the file URL based on data source name and filename.
-        Implement this method according to your application's URL structure.
-        """
-        return f"/datasource/{ds_name}/{filename}"
