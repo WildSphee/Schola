@@ -16,6 +16,7 @@ from llms.openai import call_openai
 from resources.languages import en as lang
 from resources.prompt import qa_prompt_img, qa_prompt_msg, qa_prompt_voice
 from tools.form_recognizer import analyze_image
+from tools.messenger import schola_reply
 from tools.whisper import transcribe_voice
 from utils.keyboard_markup import send_main_menu
 
@@ -32,7 +33,8 @@ async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     """
     bot_response: str = lang.qa_intro
-    await update.message.reply_text(
+    await schola_reply(
+        update,
         bot_response,
         reply_markup=ReplyKeyboardMarkup(
             [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
@@ -71,7 +73,8 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         bot_response = f"Error processing your request: {e}"
 
-    await update.message.reply_text(
+    await schola_reply(
+        update,
         bot_response,
         parse_mode="HTML",
         reply_markup=ReplyKeyboardMarkup(
@@ -113,7 +116,8 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         bot_response = f"Error processing image: {e}"
 
-    await update.message.reply_text(
+    await schola_reply(
+        update,
         bot_response,
         parse_mode="HTML",
         reply_markup=ReplyKeyboardMarkup(
@@ -153,9 +157,10 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     except Exception as e:
-        await update.message.reply_text(f"Error processing voice message: {e}")
+        await schola_reply(update, f"Error processing voice message: {e}")
 
-    await update.message.reply_text(
+    await schola_reply(
+        update,
         bot_response,
         parse_mode="HTML",
         reply_markup=ReplyKeyboardMarkup(

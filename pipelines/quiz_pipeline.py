@@ -12,6 +12,7 @@ from db.db import db
 from llms.openai import call_openai
 from resources.languages import en as lang
 from resources.prompt import quiz_prompt
+from tools.messenger import schola_reply
 from utils.keyboard_markup import send_main_menu
 
 
@@ -21,7 +22,8 @@ async def generate_question(update: Update, context: CallbackContext):
     user_id = str(user.id)
     subjects = db.get_user_subjects(user_id)
     if not subjects:
-        await update.message.reply_text(
+        await schola_reply(
+            update,
             lang.pls_select_subject,
             reply_markup=ReplyKeyboardMarkup(
                 [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
@@ -53,7 +55,8 @@ async def generate_question(update: Update, context: CallbackContext):
         explanation = quiz_data["explanation"]
     except (json.JSONDecodeError, KeyError, AttributeError) as e:
         print(e)
-        await update.message.reply_text(
+        await schola_reply(
+            update,
             "Sorry, there was an error generating the quiz question. Please try again.",
             reply_markup=ReplyKeyboardMarkup(
                 [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
@@ -70,7 +73,8 @@ async def generate_question(update: Update, context: CallbackContext):
     message = lang.mc_format.format(
         subject=subject, question=question, options_text=options_text
     )
-    await update.message.reply_text(
+    await schola_reply(
+        update,
         message,
         reply_markup=ReplyKeyboardMarkup(
             [["A", "B", "C", "D"], [KeyboardButton(lang.back_to_main)]],
@@ -99,7 +103,8 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
         return
 
     if user_answer not in valid_options:
-        await update.message.reply_text(
+        await schola_reply(
+            update,
             lang.pls_select_valid,
             reply_markup=ReplyKeyboardMarkup(
                 [["A", "B", "C", "D"], [KeyboardButton(lang.back_to_main)]],
@@ -120,7 +125,8 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
             correct_option=correct_option, explanation=explanation
         )
     )
-    await update.message.reply_text(
+    await schola_reply(
+        update,
         reply,
         reply_markup=ReplyKeyboardMarkup(
             [

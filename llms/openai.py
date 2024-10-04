@@ -30,4 +30,5 @@ def call_openai(
     )
 
     res: str = completion.choices[0].message.content
+    print(f"LLM output: \n {res}")
     return res
