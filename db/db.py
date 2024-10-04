@@ -82,6 +82,7 @@ class DB:
         )
         self.conn.commit()
 
+    # Chat history management
     def log_interaction(self, user: User, user_message: str, bot_response: str) -> None:
         with self.conn:
             self.conn.execute(
@@ -128,7 +129,7 @@ class DB:
                 (user_id,),
             )
 
-    def check_user_messages(self, user_id: str) -> int:
+    def count_user_history(self, user_id: str) -> int:
         cursor = self.conn.cursor()
         cursor.execute(
             """
@@ -178,11 +179,14 @@ class DB:
             else:
                 subjects = [subject]
             subjects_str = ",".join(subjects)
+            # Use INSERT ... ON CONFLICT to insert or update
             self.conn.execute(
                 """
-                UPDATE user SET subjects = ?, last_interaction = ? WHERE user_id = ?
+                INSERT INTO user (user_id, subjects, last_interaction)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET subjects=excluded.subjects, last_interaction=excluded.last_interaction
                 """,
-                (subjects_str, datetime.now(), user_id),
+                (user_id, subjects_str, datetime.now()),
             )
 
     def get_user_subjects(self, user_id: str) -> List[str]:
