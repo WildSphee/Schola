@@ -18,7 +18,6 @@ from resources.prompt import qa_prompt_img, qa_prompt_msg, qa_prompt_voice
 from tools.form_recognizer import analyze_image
 from tools.whisper import transcribe_voice
 from utils.keyboard_markup import send_main_menu
-from utils.md_parser import parse
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
@@ -73,7 +72,7 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot_response = f"Error processing your request: {e}"
 
     await update.message.reply_text(
-        parse(bot_response),
+        bot_response, parse_mode="HTML",
         reply_markup=ReplyKeyboardMarkup(
             [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
         ),
@@ -114,7 +113,7 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot_response = f"Error processing image: {e}"
 
     await update.message.reply_text(
-        parse(bot_response),
+        bot_response, parse_mode="HTML",
         reply_markup=ReplyKeyboardMarkup(
             [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
         ),
@@ -155,7 +154,7 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Error processing voice message: {e}")
 
     await update.message.reply_text(
-        parse(bot_response),
+        bot_response, parse_mode="HTML",
         reply_markup=ReplyKeyboardMarkup(
             [[KeyboardButton(lang.back_to_main)]], resize_keyboard=True
         ),
