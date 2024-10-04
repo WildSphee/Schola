@@ -5,9 +5,6 @@ import re
 import shutil
 from typing import Dict, Iterator, List, Literal, Optional, Tuple
 
-# Importing FAISSDS directly
-from faiss_ds import FAISSDS
-
 # Assuming these extraction functions are available
 from tools.extraction import (
     doc_to_pdf,
@@ -19,8 +16,11 @@ from tools.extraction import (
     read_pptx,
 )
 
+# Importing FAISSDS directly
+from .faiss_ds import FAISSDS
+
 # Configurations
-DATASOURCE_YAML_PATH = "datasources"
+DATASOURCE_PATH = "datasources"
 PDF_PAGEMAP_EXTRACTION_METHOD: Literal["AzureFormRecognizer", "PyPDF", "PyMuPDF"] = (
     "AzureFormRecognizer"
 )
@@ -53,7 +53,7 @@ def create_local_dir(datasource_name) -> str:
     """
     Creates a new directory with the provided datasource name under a predefined path.
     """
-    new_dir = pathlib.Path(DATASOURCE_YAML_PATH) / datasource_name
+    new_dir = pathlib.Path(DATASOURCE_PATH) / datasource_name
     new_dir.mkdir(parents=True, exist_ok=True)
     return str(new_dir)
 
@@ -237,7 +237,7 @@ def create_section_csv(
 
 
 def create_upload_file(
-    datasource: str, file_name: str, base_path: str = DATASOURCE_YAML_PATH
+    datasource: str, file_name: str, base_path: str = DATASOURCE_PATH
 ):
     """
     Create an UploadFile object from a specified file path.
@@ -352,14 +352,10 @@ def main(
     combined_sections = itertools.chain(*section_generators)
 
     # Create index using FAISSDS
-    index_name = datasource_name  # Use the datasource name as index name
-    local_dir_path = create_local_dir(index_name)
+    local_dir_path = create_local_dir(datasource_name)
 
-    # Since FAISSDS.create() expects an iterator of sections, we pass combined_sections
-    args = FAISSDS.create(section=combined_sections)
-
-    # Initialize FAISSDS with the index name
-    faiss_ds = FAISSDS(index_name=index_name)
+    # create FAISS index
+    FAISSDS.create(section=combined_sections, index_name=datasource_name)
 
     # Save local copies of files
     for f in files:

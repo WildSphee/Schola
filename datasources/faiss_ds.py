@@ -1,6 +1,5 @@
 import json
 import os
-import uuid
 from pathlib import Path
 from typing import Dict, Iterator, List
 
@@ -9,13 +8,15 @@ import numpy as np
 import openai
 from faiss import read_index
 
-DATASOURCE_YAML_PATH = "datasources/"
+DATASOURCE_PATH = "datasources"
+
+client = openai.OpenAI()
 
 
 def get_embedding(text, model="text-embedding-ada-002"):
     text = text.replace("\n", " ")
-    response = openai.Embedding.create(input=[text], model=model)
-    embedding = response["data"][0]["embedding"]
+    response = client.embeddings.create(input=[text], model=model)
+    embedding: List[float] = response.data[0].embedding
     return np.array(embedding, dtype=np.float32)
 
 
@@ -24,9 +25,9 @@ def get_embeddings(texts, model="text-embedding-ada-002", batch_size=1000):
     for i in range(0, len(texts), batch_size):
         batch_texts = texts[i : i + batch_size]
         batch_texts = [text.replace("\n", " ") for text in batch_texts]
-        response = openai.Embedding.create(input=batch_texts, model=model)
+        response = client.embeddings.create(input=batch_texts, model=model)
         batch_embeddings = [
-            np.array(data["embedding"], dtype=np.float32) for data in response["data"]
+            np.array(data.embedding, dtype=np.float32) for data in response.data
         ]
         embeddings.extend(batch_embeddings)
     return embeddings
@@ -39,21 +40,19 @@ class FAISSDS:
         super().__init__()
         self.index_name = index_name
         self.documents = []
-        self.indexstore = None
-        self.num_retriever_calls = 0
-        self.history = []
+        self.index = None
 
         # Read the documents from data.jsonl
-        json_name = "data.jsonl"
-        jsonpath = os.path.join(DATASOURCE_YAML_PATH, self.index_name, json_name)
+        json_name = "meta_data.jsonl"
+        jsonpath = os.path.join(DATASOURCE_PATH, self.index_name, json_name)
 
         with open(jsonpath, "r") as fi:
             self.documents = [json.loads(line) for line in fi]
 
         # Load the FAISS index
         index_name = "faiss.index"
-        index_path = os.path.join(DATASOURCE_YAML_PATH, self.index_name, index_name)
-        self.indexstore = read_index(index_path)
+        index_path = os.path.join(DATASOURCE_PATH, self.index_name, index_name)
+        self.index = read_index(index_path)
 
     def search_request(self, search_query: str, topk: int, skip: int = 0) -> List[Dict]:
         """
@@ -71,7 +70,7 @@ class FAISSDS:
         vector = np.array(
             [query_embedding], dtype=np.float32
         )  # FAISS expects a 2D array
-        scores, indices = self.indexstore.search(vector, topk + skip)
+        scores, indices = self.index.search(vector, topk + skip)
         hits = []
 
         for i, (score, idx) in enumerate(zip(scores[0], indices[0])):
@@ -88,7 +87,7 @@ class FAISSDS:
             parts = file_loc.split("/")
             ds_name = parts[0] if len(parts) > 0 else ""
             filename = parts[1] if len(parts) > 1 else ""
-            file_url = self.get_ds_file_url(ds_name, filename)
+            file_url = f"/datasource/{ds_name}/{filename}"
 
             hit = {
                 "id": result["id"],
@@ -99,13 +98,10 @@ class FAISSDS:
             }
             hits.append(hit)
 
-        # Update usage
-        self.num_retriever_calls += 1
-        self.history.extend(hits)
         return hits
 
     @staticmethod
-    def create(section: Iterator[Dict]) -> Dict:
+    def create(section: Iterator[Dict], index_name) -> Dict:
         """
         Create a FAISS index from sections.
 
@@ -115,16 +111,15 @@ class FAISSDS:
         Returns:
             Dict: A dictionary containing index creation info, e.g., {"index_name": index_name}
         """
-        index_name = str(uuid.uuid4())
         sections = list(section)
         keys = [entry["search_key"] for entry in sections]
 
         # Create directory for the index
-        index_dir = Path(DATASOURCE_YAML_PATH) / index_name
+        index_dir = Path(DATASOURCE_PATH) / index_name
         index_dir.mkdir(parents=True, exist_ok=True)
 
         # Save documents to data.jsonl
-        data_jsonl_path = index_dir / "data.jsonl"
+        data_jsonl_path = index_dir / "meta_data.jsonl"
         with open(data_jsonl_path, "w") as f:
             for entry in sections:
                 json.dump(entry, f)
@@ -145,9 +140,3 @@ class FAISSDS:
 
         return {"index_name": index_name}
 
-    def get_ds_file_url(self, ds_name, filename):
-        """
-        Generate the file URL based on data source name and filename.
-        Implement this method according to your application's URL structure.
-        """
-        return f"/datasource/{ds_name}/{filename}"

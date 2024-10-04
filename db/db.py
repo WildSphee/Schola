@@ -2,7 +2,7 @@ import os
 import sqlite3
 import threading
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 from telegram import User
@@ -24,7 +24,7 @@ class Interaction(BaseModel):
 
 
 class DB:
-    # ensure its singleton DB
+    # Ensure singleton DB
     _instance_lock = threading.Lock()
     _instance = None
 
@@ -41,6 +41,7 @@ class DB:
 
     def _create_tables(self):
         cursor = self.conn.cursor()
+        # Create interactions table
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS interactions (
@@ -55,18 +56,33 @@ class DB:
             )
             """
         )
+        # Create user table
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS user_states (
+            CREATE TABLE IF NOT EXISTS user (
                 user_id TEXT PRIMARY KEY,
                 pipeline TEXT,
                 subjects TEXT,  -- Comma-separated list of subjects
+                current_subject TEXT,
+                nick_name TEXT,
                 last_interaction DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        # Create subject_info table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS subject_info (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                subject_name TEXT NOT NULL,
+                subject_description TEXT,
+                use_datasource BOOLEAN
             )
             """
         )
         self.conn.commit()
 
+    # Chat history management
     def log_interaction(self, user: User, user_message: str, bot_response: str) -> None:
         with self.conn:
             self.conn.execute(
@@ -113,7 +129,7 @@ class DB:
                 (user_id,),
             )
 
-    def check_user_messages(self, user_id: str) -> int:
+    def count_user_history(self, user_id: str) -> int:
         cursor = self.conn.cursor()
         cursor.execute(
             """
@@ -129,18 +145,18 @@ class DB:
         with self.conn:
             self.conn.execute(
                 """
-                INSERT INTO user_states (user_id, pipeline, last_interaction)
+                INSERT INTO user (user_id, pipeline, last_interaction)
                 VALUES (?, ?, ?)
                 ON CONFLICT(user_id) DO UPDATE SET pipeline=excluded.pipeline, last_interaction=excluded.last_interaction
                 """,
                 (user_id, pipeline, datetime.now()),
             )
 
-    def get_user_pipeline(self, user_id: str) -> str:
+    def get_user_pipeline(self, user_id: str) -> Optional[str]:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT pipeline FROM user_states WHERE user_id = ?
+            SELECT pipeline FROM user WHERE user_id = ?
             """,
             (user_id,),
         )
@@ -152,7 +168,7 @@ class DB:
         with self.conn:
             cursor = self.conn.cursor()
             cursor.execute(
-                "SELECT subjects FROM user_states WHERE user_id = ?",
+                "SELECT subjects FROM user WHERE user_id = ?",
                 (user_id,),
             )
             result = cursor.fetchone()
@@ -163,17 +179,20 @@ class DB:
             else:
                 subjects = [subject]
             subjects_str = ",".join(subjects)
+            # Use INSERT ... ON CONFLICT to insert or update
             self.conn.execute(
                 """
-                UPDATE user_states SET subjects = ?, last_interaction = ? WHERE user_id = ?
+                INSERT INTO user (user_id, subjects, last_interaction)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET subjects=excluded.subjects, last_interaction=excluded.last_interaction
                 """,
-                (subjects_str, datetime.now(), user_id),
+                (user_id, subjects_str, datetime.now()),
             )
 
     def get_user_subjects(self, user_id: str) -> List[str]:
         cursor = self.conn.cursor()
         cursor.execute(
-            "SELECT subjects FROM user_states WHERE user_id = ?",
+            "SELECT subjects FROM user WHERE user_id = ?",
             (user_id,),
         )
         result = cursor.fetchone()
@@ -186,10 +205,56 @@ class DB:
         with self.conn:
             self.conn.execute(
                 """
-                UPDATE user_states SET subjects = '', last_interaction = ? WHERE user_id = ?
+                UPDATE user SET subjects = '', last_interaction = ? WHERE user_id = ?
                 """,
                 (datetime.now(), user_id),
             )
+
+    # Methods to manage current_subject
+    def set_current_subject(self, user_id: str, subject: str) -> None:
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO user (user_id, current_subject, last_interaction)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET current_subject=excluded.current_subject, last_interaction=excluded.last_interaction
+                """,
+                (user_id, subject, datetime.now()),
+            )
+
+    def get_current_subject(self, user_id: str) -> Optional[str]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT current_subject FROM user WHERE user_id = ?
+            """,
+            (user_id,),
+        )
+        result = cursor.fetchone()
+        return result[0] if result else None
+
+    # Methods to manage nick_name
+    def set_nick_name(self, user_id: str, nick_name: str) -> None:
+        with self.conn:
+            self.conn.execute(
+                """
+                INSERT INTO user (user_id, nick_name, last_interaction)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET nick_name=excluded.nick_name, last_interaction=excluded.last_interaction
+                """,
+                (user_id, nick_name, datetime.now()),
+            )
+
+    def get_nick_name(self, user_id: str) -> Optional[str]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT nick_name FROM user WHERE user_id = ?
+            """,
+            (user_id,),
+        )
+        result = cursor.fetchone()
+        return result[0] if result else None
 
     def close(self):
         self.conn.close()
