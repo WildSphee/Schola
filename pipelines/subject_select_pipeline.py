@@ -3,7 +3,6 @@ from typing import Any, List, Optional
 from telegram import (
     KeyboardButton,
     ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
     Update,
 )
 from telegram.ext import (
@@ -59,9 +58,7 @@ async def handle_subject_select_pipeline(
         )
     elif user_message == lang.done_selecting:
         db.set_user_pipeline(user_id, "default")
-        await update.message.reply_text(
-            "Subjects saved."
-        )
+        await update.message.reply_text("Subjects saved.")
         await send_main_menu(update)
     elif user_message in subject_info_list:
         db.set_current_subject(user_id=user_id, subject=user_message)

@@ -14,9 +14,13 @@ from telegram.ext import ContextTypes
 from db.db import db
 from llms.openai import call_openai
 from resources.languages import en as lang
-from resources.prompt import qa_prompt_img, qa_prompt_msg, qa_prompt_voice
+from resources.prompt import (
+    qa_prompt_img,
+    qa_prompt_msg2,
+    qa_prompt_voice,
+)
 from tools.form_recognizer import analyze_image
-from tools.messenger import schola_reply
+from tools.messenger import retrieve_from_subject, schola_reply
 from tools.whisper import transcribe_voice
 from utils.keyboard_markup import send_main_menu
 
@@ -67,7 +71,11 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         bot_response: str = call_openai(
             history,
-            qa_prompt_msg.format(subject=subject, query=user_message),
+            qa_prompt_msg2.format(
+                subject=subject,
+                query=user_message,
+                sources=retrieve_from_subject(user_message, subject),
+            ),
         )
     except Exception as e:
         bot_response = f"Error processing your request: {e}"

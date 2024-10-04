@@ -27,28 +27,31 @@ async def schola_reply(
         return
 
 
-def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str | None:
-    """search if given subject has a datasource, and return formatting search results"""
+def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str:
+    """search if given subject has a datasource, and return formatting search results
+
+    Return:
+        str: the retrieved docs if hit, "" if not hit / no subject info / doesn't use datasource
+    """
 
     info = db.get_subject_info_by_subject_name(subject)
 
     if not info:
-        return
+        return ""
 
     ds: bool = dict(info).get("use_datasource", False)
 
     if not ds:
-        return
+        return ""
 
     faiss_ds = FAISSDS(index_name=subject)
     hits = faiss_ds.search_request(query, topk=topk)
     res = ""
     for i, result in enumerate(hits, start=1):
-        res += f"Result {i}:"
-        # res += f"ID: {result['id']}"
+        res += f"<b>Result {i}:</b>"
         res += f"Content: {result['content']}"
         res += f"File URL: {result['file_url']}"
-        res += f"Score: {result['score']}"
-        res += "-" * 50
+        res += f"<i>Score: {result['score']} </i>"
+        res += "<hr class=\"solid\">"
 
     return res
