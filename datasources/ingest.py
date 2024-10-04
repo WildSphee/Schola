@@ -357,7 +357,6 @@ def main(
     # create FAISS index
     FAISSDS.create(section=combined_sections, index_name=datasource_name)
 
-
     # Save local copies of files
     for f in files:
         f.file.seek(0)
