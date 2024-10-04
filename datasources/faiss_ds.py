@@ -105,7 +105,7 @@ class FAISSDS:
         return hits
 
     @staticmethod
-    def create(section: Iterator[Dict]) -> Dict:
+    def create(section: Iterator[Dict], index_name) -> Dict:
         """
         Create a FAISS index from sections.
 
@@ -115,7 +115,6 @@ class FAISSDS:
         Returns:
             Dict: A dictionary containing index creation info, e.g., {"index_name": index_name}
         """
-        index_name = str(uuid.uuid4())
         sections = list(section)
         keys = [entry["search_key"] for entry in sections]
 

@@ -5,9 +5,6 @@ import re
 import shutil
 from typing import Dict, Iterator, List, Literal, Optional, Tuple
 
-# Importing FAISSDS directly
-from faiss_ds import FAISSDS
-
 # Assuming these extraction functions are available
 from tools.extraction import (
     doc_to_pdf,
@@ -18,6 +15,9 @@ from tools.extraction import (
     read_docx,
     read_pptx,
 )
+
+# Importing FAISSDS directly
+from .faiss_ds import FAISSDS
 
 # Configurations
 DATASOURCE_YAML_PATH = "datasources"
@@ -352,14 +352,11 @@ def main(
     combined_sections = itertools.chain(*section_generators)
 
     # Create index using FAISSDS
-    index_name = datasource_name  # Use the datasource name as index name
-    local_dir_path = create_local_dir(index_name)
+    local_dir_path = create_local_dir(datasource_name)
 
-    # Since FAISSDS.create() expects an iterator of sections, we pass combined_sections
-    args = FAISSDS.create(section=combined_sections)
+    # create FAISS index
+    FAISSDS.create(section=combined_sections, index_name=datasource_name)
 
-    # Initialize FAISSDS with the index name
-    faiss_ds = FAISSDS(index_name=index_name)
 
     # Save local copies of files
     for f in files:

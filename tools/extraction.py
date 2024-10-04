@@ -163,6 +163,7 @@ def pdf_to_page_map_azure(file) -> List[Tuple[int, int, str]]:
     form_recognizer_client = get_doc_analysis_client()
 
     # Read file data into bytes
+    file = file.file
     file.seek(0)
     file_data = file.read()
 
