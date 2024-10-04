@@ -13,10 +13,6 @@ from pypdf import PdfReader
 
 from tools.form_recognizer import get_doc_analysis_client
 
-# Azure Form Recognizer credentials (assumed to be set)
-AZURE_FORM_RECOGNIZER_ENDPOINT = "YOUR_FORM_RECOGNIZER_ENDPOINT"
-AZURE_FORM_RECOGNIZER_CREDENTIAL = "YOUR_FORM_RECOGNIZER_CREDENTIAL"
-
 
 def read_docx(docx_file) -> str:
     """Reads a DOCX file and returns a string of the text content.

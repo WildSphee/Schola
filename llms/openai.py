@@ -2,6 +2,8 @@ from typing import Dict, List
 
 from openai import OpenAI
 
+client = OpenAI()
+
 
 def call_openai(
     history: List[Dict[str, str]],
@@ -17,8 +19,6 @@ def call_openai(
     Returns:
         str: The generated response from OpenAI.
     """
-
-    client = OpenAI()
 
     messages = history + [
         {"role": "system", "content": query},
