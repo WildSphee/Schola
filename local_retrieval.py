@@ -21,7 +21,7 @@ def search_datasource(datasource_name, query, top_k=5):
 
 if __name__ == "__main__":
     # Example usage
-    datasource_name = "my_local_datasource"  # Replace with your datasource name
+    datasource_name = "Project Management"  # Replace with your datasource name
 
     # Search example
     query = "what is the typical project management life cycle?"  # Replace with your search query
@@ -31,8 +31,8 @@ if __name__ == "__main__":
     search_results = search_datasource(datasource_name, query, top_k)
 
     # Print search results
-    for idx, result in enumerate(search_results):
-        print(f"Result {idx + 1}:")
+    for i, result in enumerate(search_results, start=1):
+        print(f"Result {i}:")
         print(f"ID: {result['id']}")
         print(f"Content: {result['content']}")
         print(f"File URL: {result['file_url']}")

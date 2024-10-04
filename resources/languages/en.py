@@ -17,7 +17,7 @@ back_to_main = "🏠 Back to Main Menu"
 
 # Select Subject
 done_selecting = "🏠 Done Selecting Subjects"
-selecting_text = "Please select a subject (you can select multiple):"
+selecting_text = "Your current subject is {subject}, Here are a list of other subjects you're enrolled to! {subjects}"
 
 # Quiz
 correct_ans = "Correct! 🎉"

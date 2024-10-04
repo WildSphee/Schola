@@ -100,6 +100,7 @@ class FAISSDS:
 
         return hits
 
+
     @staticmethod
     def create(section: Iterator[Dict], index_name) -> Dict:
         """
@@ -139,4 +140,3 @@ class FAISSDS:
         faiss.write_index(faiss_index, str(index_path))
 
         return {"index_name": index_name}
-

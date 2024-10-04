@@ -64,11 +64,11 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         history: List[Dict[str, str]] = db.get_chat_history(user_id)
-        subjects: List[str] = db.get_user_subjects(user_id)
+        subject: str = db.get_current_subject(user_id)
 
         bot_response: str = call_openai(
             history,
-            qa_prompt_msg.format(subject=", ".join(subjects), query=user_message),
+            qa_prompt_msg.format(subject=subject, query=user_message),
         )
     except Exception as e:
         bot_response = f"Error processing your request: {e}"
@@ -105,12 +105,12 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await file.download_to_drive(file_path)
 
         extracted_text: str = analyze_image(file_path)
-        subjects: List[str] = db.get_user_subjects(user_id)
+        subject: str = db.get_current_subject(user_id)
         history: List[Dict[str, str]] = db.get_chat_history(user_id)
 
         bot_response: str = call_openai(
             history,
-            qa_prompt_img.format(subject=", ".join(subjects), query=extracted_text),
+            qa_prompt_img.format(subject=subject, query=extracted_text),
         )
 
     except Exception as e:
@@ -148,12 +148,12 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await file.download_to_drive(file_path)
 
         transcribed_text = transcribe_voice(file_path)
-        subjects: List[str] = db.get_user_subjects(user_id)
+        subject: str = db.get_current_subject(user_id)
         history: List[Dict[str, str]] = db.get_chat_history(user_id)
 
         bot_response: str = call_openai(
             history,
-            qa_prompt_voice.format(subject=", ".join(subjects), query=transcribed_text),
+            qa_prompt_voice.format(subject=subject, query=transcribed_text),
         )
 
     except Exception as e:

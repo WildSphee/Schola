@@ -13,6 +13,8 @@ from telegram.ext import (
 from db.db import db
 from resources.languages import en as lang
 from utils.keyboard_markup import send_main_menu, send_subject_menu
+from tools.messenger import schola_reply
+from typing import List
 
 
 async def handle_subject_select_pipeline(
@@ -31,13 +33,15 @@ async def handle_subject_select_pipeline(
         None
     """
     user_id = str(user.id)
-    valid_subjects = [
-        "Math",
-        "Science",
-        "History",
-        "English",
-        lang.done_selecting,
-    ]
+
+    subject_info_list: List[str] = db.get_user_subjects(user_id)
+    subject_ids_list: List[str] = [info["id"] for info in subject_info_list]
+    subject_list: List[str] = []
+    current_subject: str = db.get_current_subject(user_id)
+
+    await schola_reply(update=update, message=lang.select_subject.format(subject=current_subject))
+
+
     if user_message in valid_subjects:
         if user_message == lang.done_selecting:
             db.set_user_pipeline(user_id, "default")

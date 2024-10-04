@@ -164,13 +164,15 @@ class DB:
         return result[0] if result else None
 
     # Methods to manage user's selected subjects
-    def add_user_subject(self, user_id: str, subject: str) -> None:
+    def add_user_subject(self, user_id: str, subject: int) -> None:
         with self.conn:
             cursor = self.conn.cursor()
             cursor.execute(
                 "SELECT subjects FROM user WHERE user_id = ?",
                 (user_id,),
             )
+            subject = str(subject)
+
             result = cursor.fetchone()
             if result and result[0]:
                 subjects = result[0].split(",")
@@ -258,6 +260,118 @@ class DB:
 
     def close(self):
         self.conn.close()
+
+    # Subject_info table
+    def add_subject_info(
+        self, subject_name: str, subject_description: str, use_datasource: bool
+    ) -> int:
+        with self.conn:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO subject_info (subject_name, subject_description, use_datasource)
+                VALUES (?, ?, ?)
+                """,
+                (subject_name, subject_description, use_datasource),
+            )
+            return cursor.lastrowid  # Returns the id of the newly inserted row
+
+    def get_subject_info_by_id(self, subject_id: int) -> Optional[Dict[str, any]]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, subject_name, subject_description, use_datasource FROM subject_info
+            WHERE id = ?
+            """,
+            (subject_id,),
+        )
+        result = cursor.fetchone()
+        if result:
+            return {
+                "id": result[0],
+                "subject_name": result[1],
+                "subject_description": result[2],
+                "use_datasource": bool(result[3]),
+            }
+        return None
+
+    def get_subject_info_by_subject_name(
+        self, subject_name: int
+    ) -> Optional[Dict[str, any]]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, subject_name, subject_description, use_datasource FROM subject_info
+            WHERE subject_name = ?
+            """,
+            (subject_name,),
+        )
+        result = cursor.fetchone()
+        if result:
+            return {
+                "id": result[0],
+                "subject_name": result[1],
+                "subject_description": result[2],
+                "use_datasource": bool(result[3]),
+            }
+        return None
+
+    def get_all_subjects_info(self) -> List[Dict[str, any]]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, subject_name, subject_description, use_datasource FROM subject_info
+            """
+        )
+        rows = cursor.fetchall()
+        subjects = []
+        for row in rows:
+            subjects.append(
+                {
+                    "id": row[0],
+                    "subject_name": row[1],
+                    "subject_description": row[2],
+                    "use_datasource": bool(row[3]),
+                }
+            )
+        return subjects
+
+    def update_subject_info_by_id(
+        self,
+        subject_id: int,
+        subject_name: Optional[str] = None,
+        subject_description: Optional[str] = None,
+        use_datasource: Optional[bool] = None,
+    ) -> None:
+        with self.conn:
+            # Build the update statement dynamically based on which parameters are provided
+            fields = []
+            params = []
+            if subject_name is not None:
+                fields.append("subject_name = ?")
+                params.append(subject_name)
+            if subject_description is not None:
+                fields.append("subject_description = ?")
+                params.append(subject_description)
+            if use_datasource is not None:
+                fields.append("use_datasource = ?")
+                params.append(use_datasource)
+            params.append(subject_id)
+            sql = f"""
+                UPDATE subject_info
+                SET {', '.join(fields)}
+                WHERE id = ?
+                """
+            self.conn.execute(sql, params)
+
+    def delete_subject_info_by_id(self, subject_id: int) -> None:
+        with self.conn:
+            self.conn.execute(
+                """
+                DELETE FROM subject_info WHERE id = ?
+                """,
+                (subject_id,),
+            )
 
 
 db = DB()
