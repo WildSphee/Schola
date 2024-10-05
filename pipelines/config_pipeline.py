@@ -9,6 +9,7 @@ from telegram.ext import (
     ContextTypes,
 )
 
+from db.db import db
 from resources.languages import en as lang
 
 
@@ -27,6 +28,8 @@ async def handle_configuration_pipeline(
     Returns:
         None
     """
+    db.set_user_pipeline(update.message.from_user.id, "configuration")
+
     await update.message.reply_text(
         "Configuration settings are not implemented yet.",
         reply_markup=ReplyKeyboardMarkup(

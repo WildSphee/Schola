@@ -18,6 +18,8 @@ from utils.keyboard_markup import send_main_menu
 async def handle_subject_select_pipeline(
     update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str
 ) -> None:
+    db.set_user_pipeline(user.id, "subject_select")
+
     """
     Handle the subject selection pipeline.
 
@@ -57,7 +59,6 @@ async def handle_subject_select_pipeline(
             ),
         )
     elif user_message == lang.done_selecting:
-        db.set_user_pipeline(user_id, "default")
         await update.message.reply_text("Subjects saved.")
         await send_main_menu(update)
     elif user_message in subject_info_list:

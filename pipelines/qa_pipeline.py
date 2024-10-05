@@ -36,6 +36,8 @@ async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
     """
+    db.set_user_pipeline(update.message.from_user.id, "qa")
+
     bot_response: str = lang.qa_intro
     await schola_reply(
         update,
@@ -57,6 +59,7 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     user_id = str(update.message.from_user.id)
     user_message: str = update.message.text
+    db.set_user_pipeline(user_id, "qa")
 
     if user_message == lang.back_to_main:
         db.set_user_pipeline(user_id, "default")
@@ -101,6 +104,8 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     user: User = update.message.from_user
     user_id = str(user.id)
+    db.set_user_pipeline(user_id, "qa")
+
     photo = update.message.photo[-1]  # Get the highest resolution photo
 
     await update.message.chat.send_action(action=ChatAction.TYPING)
@@ -144,6 +149,7 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     user: User = update.message.from_user
     user_id = str(user.id)
+    db.set_user_pipeline(user_id, "qa")
 
     voice = update.message.voice
     file = await voice.get_file()

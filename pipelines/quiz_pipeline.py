@@ -15,7 +15,7 @@ from tools.messenger import schola_reply
 from utils.keyboard_markup import send_main_menu
 
 
-async def generate_question(update: Update, context: CallbackContext):
+async def _generate_question(update: Update, context: CallbackContext):
     """Generate and present a quiz question to the user."""
     user = update.message.from_user
     user_id = str(user.id)
@@ -81,12 +81,14 @@ async def generate_question(update: Update, context: CallbackContext):
 
 async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
+    db.set_user_pipeline(update.message.from_user.id, "quiz")
+
     user_answer = update.message.text
     valid_options = ["A", "B", "C", "D"]
 
     # If the user have NOT generated a question - they will not have correct_option data
     if user_answer == lang.next_question or user_answer == lang.quiz:
-        await generate_question(update, context)
+        await _generate_question(update, context)
         return
 
     if user_answer == lang.back_to_main:

@@ -52,6 +52,6 @@ def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str:
         res += f"Content: {result['content']}"
         res += f"File URL: {result['file_url']}"
         res += f"<i>Score: {result['score']} </i>"
-        res += "<hr class=\"solid\">"
+        res += '<hr class="solid">'
 
     return res

@@ -35,7 +35,6 @@ async def handle_start_command(update: Update, context: ContextTypes.DEFAULT_TYP
     bot_response = lang.schola_intro.format(name=user.first_name)
 
     db.set_user_pipeline(user_id, "default")
-    db.clear_user_subjects(user_id)
 
     # Present the main menu
     await send_main_menu(update, bot_response)
