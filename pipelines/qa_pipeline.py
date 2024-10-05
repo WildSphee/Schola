@@ -104,7 +104,6 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     user: User = update.message.from_user
     user_id = str(user.id)
-    db.set_user_pipeline(user_id, "qa")
 
     photo = update.message.photo[-1]  # Get the highest resolution photo
 
@@ -149,7 +148,6 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     user: User = update.message.from_user
     user_id = str(user.id)
-    db.set_user_pipeline(user_id, "qa")
 
     voice = update.message.voice
     file = await voice.get_file()

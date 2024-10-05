@@ -81,7 +81,6 @@ async def _generate_question(update: Update, context: CallbackContext):
 
 async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
-    db.set_user_pipeline(update.message.from_user.id, "quiz")
 
     user_answer = update.message.text
     valid_options = ["A", "B", "C", "D"]

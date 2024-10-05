@@ -16,16 +16,16 @@ from utils.keyboard_markup import send_main_menu
 
 
 async def handle_subject_select_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    user: Any,
+    user_message: str = "",
 ) -> None:
-    db.set_user_pipeline(user.id, "subject_select")
-
     """
     Handle the subject selection pipeline.
 
     Args:
         update (Update): Incoming Telegram update.
-        context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
         user (Any): The user object from the message.
         user_message (str): The message text sent by the user.
 

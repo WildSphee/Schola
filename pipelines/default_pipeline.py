@@ -7,7 +7,6 @@ from telegram.ext import (
     ContextTypes,
 )
 
-from db.db import db
 from pipelines.config_pipeline import handle_configuration_pipeline
 from pipelines.qa_pipeline import qa_start
 from pipelines.quiz_pipeline import handle_quiz_pipeline
@@ -32,11 +31,11 @@ async def handle_default_pipeline(
     """
 
     if menu_selection == lang.select_subject:
-        await handle_subject_select_pipeline(update, context, user, menu_selection)
+        await handle_subject_select_pipeline(update, context, user)
     elif menu_selection == lang.quiz:
         return await handle_quiz_pipeline(update, context)
     elif menu_selection == lang.configuration:
-        await handle_configuration_pipeline(update, context, user, menu_selection)
+        await handle_configuration_pipeline(update, context, user)
     elif menu_selection == lang.qa:
         await qa_start(update, context)
     else:

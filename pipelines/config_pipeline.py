@@ -9,12 +9,11 @@ from telegram.ext import (
     ContextTypes,
 )
 
-from db.db import db
 from resources.languages import en as lang
 
 
 async def handle_configuration_pipeline(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any, user_message: str
+    update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any
 ) -> None:
     """
     Handle the configuration pipeline.
@@ -23,12 +22,10 @@ async def handle_configuration_pipeline(
         update (Update): Incoming Telegram update.
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
         user (Any): The user object from the message.
-        user_message (str): The message text sent by the user.
 
     Returns:
         None
     """
-    db.set_user_pipeline(update.message.from_user.id, "configuration")
 
     await update.message.reply_text(
         "Configuration settings are not implemented yet.",
