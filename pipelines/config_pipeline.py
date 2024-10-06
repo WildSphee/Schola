@@ -9,9 +9,10 @@ from telegram.ext import (
     ContextTypes,
 )
 
+from db.db import db
 from resources.languages import en as lang
 from utils.const import CONFIG_PIPELINE
-from db.db import db
+
 
 async def handle_configuration_pipeline(
     update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any

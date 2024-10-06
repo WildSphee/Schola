@@ -1,6 +1,5 @@
-
-QUIZ_PIPELINE="quiz"
-QA_PIPELINE="qa"
-SUBJECT_SELECT_PIPELINE="subject_select"
-DEFAULT_PIPELINE="default"
-CONFIG_PIPELINE="config"
+QUIZ_PIPELINE = "quiz"
+QA_PIPELINE = "qa"
+SUBJECT_SELECT_PIPELINE = "subject_select"
+DEFAULT_PIPELINE = "default"
+CONFIG_PIPELINE = "config"

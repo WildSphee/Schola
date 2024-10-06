@@ -12,8 +12,8 @@ from llms.openai import call_openai
 from resources.languages import en as lang
 from resources.prompt import quiz_prompt
 from tools.messenger import schola_reply
+from utils.const import DEFAULT_PIPELINE, QUIZ_PIPELINE
 from utils.keyboard_markup import send_main_menu
-from utils.const import QUIZ_PIPELINE, DEFAULT_PIPELINE
 
 
 async def _generate_question(update: Update, context: CallbackContext):

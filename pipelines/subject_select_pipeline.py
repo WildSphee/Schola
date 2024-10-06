@@ -12,8 +12,8 @@ from telegram.ext import (
 from db.db import db
 from resources.languages import en as lang
 from tools.messenger import schola_reply
+from utils.const import SUBJECT_SELECT_PIPELINE
 from utils.keyboard_markup import send_main_menu
-from utils.const import SUBJECT_SELECT_PIPELINE, DEFAULT_PIPELINE
 
 
 async def handle_subject_select_pipeline(

@@ -16,8 +16,14 @@ from pipelines.qa_pipeline import (
 from pipelines.quiz_pipeline import handle_quiz_pipeline
 from pipelines.subject_select_pipeline import handle_subject_select_pipeline
 from resources.languages import en as lang
+from utils.const import (
+    CONFIG_PIPELINE,
+    DEFAULT_PIPELINE,
+    QA_PIPELINE,
+    QUIZ_PIPELINE,
+    SUBJECT_SELECT_PIPELINE,
+)
 from utils.keyboard_markup import send_main_menu
-from utils.const import *
 
 
 async def handle_start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
