@@ -37,8 +37,9 @@ class DB:
                     cls._instance = super(DB, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self):
-        self.conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+    def __init__(self, conn=None):
+        # for monkeypatching in test
+        self.conn = conn if conn else sqlite3.connect(DATABASE_FILE, check_same_thread=False)
         self._create_tables()
 
     def _create_tables(self):
