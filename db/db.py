@@ -1,6 +1,8 @@
 import os
 import sqlite3
 import threading
+import uuid  # For generating UUIDs
+import json  # For encoding lists as JSON strings
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -41,7 +43,7 @@ class DB:
 
     def _create_tables(self):
         cursor = self.conn.cursor()
-        # Create interactions table
+        # Create user interactions table
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS interactions (
@@ -52,7 +54,9 @@ class DB:
                 last_name TEXT,
                 user_message TEXT,
                 bot_response TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                current_subject TEXT,   -- New column
+                current_pipeline TEXT   -- New column
             )
             """
         )
@@ -74,23 +78,33 @@ class DB:
             """
             CREATE TABLE IF NOT EXISTS subject_info (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                subject_key TEXT UNIQUE NOT NULL,  -- New column
                 subject_name TEXT NOT NULL,
                 subject_description TEXT,
-                use_datasource BOOLEAN
+                use_datasource BOOLEAN,
+                tags TEXT  -- New column to store list of strings as JSON
             )
             """
         )
         self.conn.commit()
 
     # Chat history management
-    def log_interaction(self, user: User, user_message: str, bot_response: str) -> None:
+    def log_interaction(
+        self,
+        user: User,
+        user_message: str,
+        bot_response: str,
+        current_subject: Optional[str] = None,
+        current_pipeline: Optional[str] = None,
+    ) -> None:
         with self.conn:
             self.conn.execute(
                 """
                 INSERT INTO interactions (
                     user_id, username, first_name, last_name,
-                    user_message, bot_response, timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    user_message, bot_response, timestamp,
+                    current_subject, current_pipeline  -- New columns
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     str(user.id),
@@ -100,6 +114,8 @@ class DB:
                     user_message,
                     bot_response,
                     datetime.now(),
+                    current_subject,
+                    current_pipeline,
                 ),
             )
 
@@ -263,16 +279,28 @@ class DB:
 
     # Subject_info table
     def add_subject_info(
-        self, subject_name: str, subject_description: str, use_datasource: bool
+        self,
+        subject_name: str,
+        subject_description: str,
+        use_datasource: bool,
+        tags: Optional[List[str]] = None,
     ) -> int:
+        subject_key = str(uuid.uuid4())
+        tags_str = json.dumps(tags) if tags else '[]'
         with self.conn:
             cursor = self.conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO subject_info (subject_name, subject_description, use_datasource)
-                VALUES (?, ?, ?)
+                INSERT INTO subject_info (subject_key, subject_name, subject_description, use_datasource, tags)
+                VALUES (?, ?, ?, ?, ?)
                 """,
-                (subject_name, subject_description, use_datasource),
+                (
+                    subject_key,
+                    subject_name,
+                    subject_description,
+                    use_datasource,
+                    tags_str,
+                ),
             )
             return cursor.lastrowid  # Returns the id of the newly inserted row
 
@@ -280,7 +308,7 @@ class DB:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT id, subject_name, subject_description, use_datasource FROM subject_info
+            SELECT id, subject_key, subject_name, subject_description, use_datasource, tags FROM subject_info
             WHERE id = ?
             """,
             (subject_id,),
@@ -289,9 +317,11 @@ class DB:
         if result:
             return {
                 "id": result[0],
-                "subject_name": result[1],
-                "subject_description": result[2],
-                "use_datasource": bool(result[3]),
+                "subject_key": result[1],
+                "subject_name": result[2],
+                "subject_description": result[3],
+                "use_datasource": bool(result[4]),
+                "tags": json.loads(result[5]) if result[5] else [],
             }
         return None
 
@@ -301,7 +331,7 @@ class DB:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT id, subject_name, subject_description, use_datasource FROM subject_info
+            SELECT id, subject_key, subject_name, subject_description, use_datasource, tags FROM subject_info
             WHERE subject_name = ?
             """,
             (subject_name,),
@@ -310,9 +340,34 @@ class DB:
         if result:
             return {
                 "id": result[0],
-                "subject_name": result[1],
-                "subject_description": result[2],
-                "use_datasource": bool(result[3]),
+                "subject_key": result[1],
+                "subject_name": result[2],
+                "subject_description": result[3],
+                "use_datasource": bool(result[4]),
+                "tags": json.loads(result[5]) if result[5] else [],
+            }
+        return None
+
+    def get_subject_info_by_subject_key(
+        self, subject_key: str
+    ) -> Optional[Dict[str, any]]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, subject_key, subject_name, subject_description, use_datasource, tags FROM subject_info
+            WHERE subject_key = ?
+            """,
+            (subject_key,),
+        )
+        result = cursor.fetchone()
+        if result:
+            return {
+                "id": result[0],
+                "subject_key": result[1],
+                "subject_name": result[2],
+                "subject_description": result[3],
+                "use_datasource": bool(result[4]),
+                "tags": json.loads(result[5]) if result[5] else [],
             }
         return None
 
@@ -320,7 +375,7 @@ class DB:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT id, subject_name, subject_description, use_datasource FROM subject_info
+            SELECT id, subject_key, subject_name, subject_description, use_datasource, tags FROM subject_info
             """
         )
         rows = cursor.fetchall()
@@ -329,9 +384,11 @@ class DB:
             subjects.append(
                 {
                     "id": row[0],
-                    "subject_name": row[1],
-                    "subject_description": row[2],
-                    "use_datasource": bool(row[3]),
+                    "subject_key": row[1],
+                    "subject_name": row[2],
+                    "subject_description": row[3],
+                    "use_datasource": bool(row[4]),
+                    "tags": json.loads(row[5]) if row[5] else [],
                 }
             )
         return subjects
@@ -342,6 +399,7 @@ class DB:
         subject_name: Optional[str] = None,
         subject_description: Optional[str] = None,
         use_datasource: Optional[bool] = None,
+        tags: Optional[List[str]] = None
     ) -> None:
         with self.conn:
             # Build the update statement dynamically based on which parameters are provided
@@ -356,6 +414,9 @@ class DB:
             if use_datasource is not None:
                 fields.append("use_datasource = ?")
                 params.append(use_datasource)
+            if tags is not None:
+                fields.append("tags = ?")
+                params.append(json.dumps(tags))
             params.append(subject_id)
             sql = f"""
                 UPDATE subject_info
