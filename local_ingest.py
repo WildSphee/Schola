@@ -1,10 +1,12 @@
+from typing import List
+
 from datasources.ingest import DatasourceConfig, create_upload_file
 from datasources.ingest import main as ingest_main
 
 # Define the datasource name
 datasource_name = "my_local_datasource"
 
-existing_file_names = []
+existing_file_names: List[str] = []
 
 # List of local files to process
 local_files = [

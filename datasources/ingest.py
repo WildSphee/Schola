@@ -317,11 +317,11 @@ def main(
             # Extract CSV data
             json_data = extract_csv(file, config.csv_header)
             sections = create_section_csv(
-                filename=file.filename,
-                json_data=json_data,
+                json=json_data,
                 file_url=file_url,
                 search_key=config.csv_key if config.csv_header else "k0",
                 csv_out_template=config.csv_out_template,
+                filename=file.filename,
             )
         else:
             # Handle non-slicable documents or when slicing is disabled

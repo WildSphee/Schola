@@ -15,9 +15,7 @@ from db.db import db
 from llms.openai import call_openai
 from resources.languages import en as lang
 from resources.prompt import (
-    qa_prompt_img,
     qa_prompt_msg2,
-    qa_prompt_voice,
 )
 from tools.form_recognizer import analyze_image
 from tools.messenger import retrieve_from_subject, schola_reply
@@ -122,7 +120,7 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         extracted_text: str = analyze_image(file_path)
         subject: str = db.get_current_subject(user_id)
-        user_message = qa_prompt_img.format(subject=subject, query=extracted_text)
+        user_message = qa_prompt_msg2.format(subject=subject, query=extracted_text)
     except Exception as e:
         await update.message.reply_text(f"An Error as occured processing the file: {e}")
 
@@ -153,7 +151,7 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         transcribed_text = transcribe_voice(file_path)
         subject: str = db.get_current_subject(user_id)
         user_message: str = (
-            qa_prompt_voice.format(subject=subject, query=transcribed_text),
+            qa_prompt_msg2.format(subject=subject, query=transcribed_text),
         )
 
     except Exception as e:
