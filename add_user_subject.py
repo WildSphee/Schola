@@ -6,6 +6,16 @@ subjects = [
         "learn about being a good PM, agile, waterfall & hybrid",
         True,
     ),
+    (
+        "Economy",
+        "Learn about the state of a country or region in terms of the production and consumption of goods and services and the supply of money",
+        False,
+    ),
+    (
+        "Geography",
+        "Geography is a branch of inquiry that focuses on spatial information on Earth. It is an extremely broad topic and can be broken down multiple ways.",
+        False,
+    ),
 ]
 
 

@@ -19,7 +19,7 @@ async def handle_subject_select_pipeline(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     user: Any,
-    user_message: str = "",
+    user_message: str,
 ) -> None:
     """
     Handle the subject selection pipeline.
@@ -33,6 +33,7 @@ async def handle_subject_select_pipeline(
         None
     """
     user_id = str(user.id)
+    db.set_user_pipeline(user_id, "select_subject")
 
     subject_info_list: List[str] = db.get_user_subjects(user_id)
     current_subject: str = db.get_current_subject(user_id) or "'No current subject'"
@@ -41,7 +42,7 @@ async def handle_subject_select_pipeline(
     subject_info: str = ""
     for i, s in enumerate(subject_info_list, start=1):
         s_info: Optional[str] = db.get_subject_info_by_subject_name(s)
-        subject_info += f"\n<b>{i}.{s}</b>\n"
+        subject_info += f"\n<b>{i}. {s}</b>\n"
         subject_info += f"{dict(s_info).get('subject_description')}" if s_info else ""
         subject_info += "\n"
 

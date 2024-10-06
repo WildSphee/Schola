@@ -54,11 +54,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     user_id = str(user.id)
     user_message: str = update.message.text.strip()
-    current_pipeline: str = db.get_user_pipeline(user_id)
-
-    if not current_pipeline:
-        current_pipeline = "default"
-        db.set_user_pipeline(user_id, current_pipeline)
+    current_pipeline: str = db.get_user_pipeline(user_id) or "default"
 
     if user_message == lang.back_to_main:
         db.set_user_pipeline(user_id, "default")

@@ -82,6 +82,8 @@ async def _generate_question(update: Update, context: CallbackContext):
 async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
 
+    user_id = update.message.from_user.id
+    db.set_user_pipeline(user_id, "quiz")
     user_answer = update.message.text
     valid_options = ["A", "B", "C", "D"]
 
@@ -94,7 +96,7 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
         # reset user data for quiz
         context.user_data["correct_option"] = None
         context.user_data["explanation"] = None
-        db.set_user_pipeline(update.message.from_user.id, "default")
+        db.set_user_pipeline(user_id, "default")
         await send_main_menu(update)
         return
 

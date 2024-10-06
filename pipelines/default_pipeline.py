@@ -31,7 +31,7 @@ async def handle_default_pipeline(
     """
 
     if menu_selection == lang.select_subject:
-        await handle_subject_select_pipeline(update, context, user)
+        await handle_subject_select_pipeline(update, context, user, menu_selection)
     elif menu_selection == lang.quiz:
         return await handle_quiz_pipeline(update, context)
     elif menu_selection == lang.configuration:
