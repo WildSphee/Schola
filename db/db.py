@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 from telegram import User
 
-DATABASE_FILE = f"{os.getenv('DATABASE_NAME') or 'default'}.db"
+DATABASE_FILE = f"{os.getenv('DATABASE_NAME') or 'database'}.db"
 
 
 class Interaction(BaseModel):
