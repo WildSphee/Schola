@@ -119,12 +119,10 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await file.download_to_drive(file_path)
 
         extracted_text: str = analyze_image(file_path)
-        subject: str = db.get_current_subject(user_id)
-        user_message = qa_prompt_msg2.format(subject=subject, query=extracted_text)
     except Exception as e:
         await update.message.reply_text(f"An Error as occured processing the file: {e}")
 
-    await _qa_retrieval_generation(update, user_id, user_message)
+    await _qa_retrieval_generation(update, user_id, extracted_text)
 
 
 async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -149,12 +147,8 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await file.download_to_drive(file_path)
 
         transcribed_text = transcribe_voice(file_path)
-        subject: str = db.get_current_subject(user_id)
-        user_message: str = (
-            qa_prompt_msg2.format(subject=subject, query=transcribed_text),
-        )
 
     except Exception as e:
         await schola_reply(update, f"Error processing voice message: {e}")
 
-    await _qa_retrieval_generation(update, user_id, user_message)
+    await _qa_retrieval_generation(update, user_id, transcribed_text)
