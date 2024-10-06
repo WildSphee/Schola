@@ -7,14 +7,14 @@ subjects = [
         True,
     ),
     (
-        "Economy",
-        "Learn about the state of a country or region in terms of the production and consumption of goods and services and the supply of money",
-        False,
+        "Southeast Asia Economy",
+        "In the study of Southeast Asia, Politics and Uneven Development under Hyperglobalisation, comparative politics and orthodox economics.",
+        True,
     ),
     (
-        "Geography",
-        "Geography is a branch of inquiry that focuses on spatial information on Earth. It is an extremely broad topic and can be broken down multiple ways.",
-        False,
+        "Spanish History",
+        "Interesting Stories, Spanish History & Random Facts About Spain.",
+        True,
     ),
 ]
 
@@ -30,4 +30,7 @@ for subject in subjects:
 # enrolling the user
 user_id = 1624490023
 # db.clear_user_subjects(user_id)
-db.add_user_subject(user_id=user_id, subject="Economy")
+db.clear_user_subjects(user_id=user_id)
+db.add_user_subject(user_id=user_id, subject="Southeast Asia Economy")
+db.add_user_subject(user_id=user_id, subject="Project Management")
+db.add_user_subject(user_id=user_id, subject="Spanish History")
