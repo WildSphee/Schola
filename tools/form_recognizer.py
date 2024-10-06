@@ -41,6 +41,7 @@ def analyze_image(image_path: str) -> str:
         poller = client.begin_analyze_document("prebuilt-read", image)
         result = poller.result()
 
+    # for every page of a given document, analyze the page content
     extracted_text = ""
     for page in result.pages:
         for line in page.lines:

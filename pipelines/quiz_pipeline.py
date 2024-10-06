@@ -1,5 +1,4 @@
 import json
-import random
 import re
 
 from telegram import KeyboardButton, ReplyKeyboardMarkup, Update
@@ -13,15 +12,16 @@ from llms.openai import call_openai
 from resources.languages import en as lang
 from resources.prompt import quiz_prompt
 from tools.messenger import schola_reply
+from utils.const import DEFAULT_PIPELINE, QUIZ_PIPELINE
 from utils.keyboard_markup import send_main_menu
 
 
-async def generate_question(update: Update, context: CallbackContext):
+async def _generate_question(update: Update, context: CallbackContext):
     """Generate and present a quiz question to the user."""
     user = update.message.from_user
     user_id = str(user.id)
-    subjects = db.get_user_subjects(user_id)
-    if not subjects:
+    subject: str = db.get_current_subject(user_id)
+    if not subject:
         await schola_reply(
             update,
             lang.pls_select_subject,
@@ -31,11 +31,7 @@ async def generate_question(update: Update, context: CallbackContext):
         )
         return ConversationHandler.END
 
-    # Randomly select a subject
-    subject = random.choice(subjects)
-
-    prompt = quiz_prompt.format(subject=subject)
-    bot_response = call_openai([], prompt)
+    bot_response = call_openai([], quiz_prompt.format(subject=subject))
 
     # Remove any code fences from the response
     bot_response = bot_response.strip()
@@ -86,19 +82,22 @@ async def generate_question(update: Update, context: CallbackContext):
 
 async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
+
+    user_id = update.message.from_user.id
+    db.set_user_pipeline(user_id, QUIZ_PIPELINE)
     user_answer = update.message.text
     valid_options = ["A", "B", "C", "D"]
 
     # If the user have NOT generated a question - they will not have correct_option data
-    if user_answer == lang.next_question or not context.user_data.get("correct_option"):
-        await generate_question(update, context)
+    if user_answer == lang.next_question or user_answer == lang.quiz:
+        await _generate_question(update, context)
         return
 
     if user_answer == lang.back_to_main:
         # reset user data for quiz
         context.user_data["correct_option"] = None
         context.user_data["explanation"] = None
-        db.set_user_pipeline(update.message.from_user.id, "default")
+        db.set_user_pipeline(user_id, DEFAULT_PIPELINE)
         await send_main_menu(update)
         return
 
