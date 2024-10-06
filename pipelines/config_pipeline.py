@@ -10,7 +10,8 @@ from telegram.ext import (
 )
 
 from resources.languages import en as lang
-
+from utils.const import CONFIG_PIPELINE
+from db.db import db
 
 async def handle_configuration_pipeline(
     update: Update, context: ContextTypes.DEFAULT_TYPE, user: Any
@@ -26,6 +27,8 @@ async def handle_configuration_pipeline(
     Returns:
         None
     """
+    user_id = update.message.from_user.id
+    db.set_user_pipeline(user_id, CONFIG_PIPELINE)
 
     await update.message.reply_text(
         "Configuration settings are not implemented yet.",

@@ -23,6 +23,7 @@ from tools.form_recognizer import analyze_image
 from tools.messenger import retrieve_from_subject, schola_reply
 from tools.whisper import transcribe_voice
 from utils.keyboard_markup import send_main_menu
+from utils.const import DEFAULT_PIPELINE, QA_PIPELINE
 
 TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
@@ -36,7 +37,7 @@ async def qa_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context (ContextTypes.DEFAULT_TYPE): Context provided by the handler.
 
     """
-    db.set_user_pipeline(update.message.from_user.id, "qa")
+    db.set_user_pipeline(update.message.from_user.id, QA_PIPELINE)
 
     bot_response: str = lang.qa_intro
     await schola_reply(
@@ -59,10 +60,10 @@ async def qa_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     user_id = str(update.message.from_user.id)
     user_message: str = update.message.text
-    db.set_user_pipeline(user_id, "qa")
+    db.set_user_pipeline(user_id, QA_PIPELINE)
 
     if user_message == lang.back_to_main:
-        db.set_user_pipeline(user_id, "default")
+        db.set_user_pipeline(user_id, DEFAULT_PIPELINE)
         await send_main_menu(update)
         return
 

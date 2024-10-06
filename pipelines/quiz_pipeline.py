@@ -13,6 +13,7 @@ from resources.languages import en as lang
 from resources.prompt import quiz_prompt
 from tools.messenger import schola_reply
 from utils.keyboard_markup import send_main_menu
+from utils.const import QUIZ_PIPELINE, DEFAULT_PIPELINE
 
 
 async def _generate_question(update: Update, context: CallbackContext):
@@ -83,7 +84,7 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
     """Check the user's answer and provide feedback."""
 
     user_id = update.message.from_user.id
-    db.set_user_pipeline(user_id, "quiz")
+    db.set_user_pipeline(user_id, QUIZ_PIPELINE)
     user_answer = update.message.text
     valid_options = ["A", "B", "C", "D"]
 
@@ -96,7 +97,7 @@ async def handle_quiz_pipeline(update: Update, context: CallbackContext):
         # reset user data for quiz
         context.user_data["correct_option"] = None
         context.user_data["explanation"] = None
-        db.set_user_pipeline(user_id, "default")
+        db.set_user_pipeline(user_id, DEFAULT_PIPELINE)
         await send_main_menu(update)
         return
 
