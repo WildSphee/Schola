@@ -1,8 +1,8 @@
+import json  # For encoding lists as JSON strings
 import os
 import sqlite3
 import threading
 import uuid  # For generating UUIDs
-import json  # For encoding lists as JSON strings
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -39,7 +39,9 @@ class DB:
 
     def __init__(self, conn=None):
         # for monkeypatching in test
-        self.conn = conn if conn else sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+        self.conn = (
+            conn if conn else sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+        )
         self._create_tables()
 
     def _create_tables(self):
@@ -287,7 +289,7 @@ class DB:
         tags: Optional[List[str]] = None,
     ) -> int:
         subject_key = str(uuid.uuid4())
-        tags_str = json.dumps(tags) if tags else '[]'
+        tags_str = json.dumps(tags) if tags else "[]"
         with self.conn:
             cursor = self.conn.cursor()
             cursor.execute(
@@ -400,7 +402,7 @@ class DB:
         subject_name: Optional[str] = None,
         subject_description: Optional[str] = None,
         use_datasource: Optional[bool] = None,
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
     ) -> None:
         with self.conn:
             # Build the update statement dynamically based on which parameters are provided

@@ -5,19 +5,21 @@ subjects = [
         "Project Management",
         "learn about being a good PM, agile, waterfall & hybrid",
         True,
-        ["A_Guide_to_the_Project_Management_Body_of_Knowledge_PMBOK_Project_Management_Institute_7_2021_Project_Management_Institute.pdf"]
+        [
+            "A_Guide_to_the_Project_Management_Body_of_Knowledge_PMBOK_Project_Management_Institute_7_2021_Project_Management_Institute.pdf"
+        ],
     ),
     (
         "Southeast Asia Economy",
         "In the study of Southeast Asia, Politics and Uneven Development under Hyperglobalisation, comparative politics and orthodox economics.",
         True,
-        ["The_Political_Economy_of_Southeast_Asia__Politics_and_Uneven.pdf"]
+        ["The_Political_Economy_of_Southeast_Asia__Politics_and_Uneven.pdf"],
     ),
     (
         "Spanish History",
         "Interesting Stories, Spanish History & Random Facts About Spain.",
         True,
-        ["The_Great_Book_of_Spain__Interesting_Stories,_Spanish.pdf"]
+        ["The_Great_Book_of_Spain__Interesting_Stories,_Spanish.pdf"],
     ),
 ]
 

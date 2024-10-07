@@ -1,12 +1,10 @@
-import sqlite3
-
 import pytest
 from telegram import User
 
 from db.db import DB
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def db(monkeypatch):
     """Set up an in-memory database for testing using monkeypatch."""
     monkeypatch.setattr("db.db.DATABASE_FILE", ":memory:")
