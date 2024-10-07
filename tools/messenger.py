@@ -4,6 +4,7 @@ from telegram import Update
 
 from datasources.faiss_ds import FAISSDS
 from db.db import db
+import os
 
 
 async def schola_reply(
@@ -45,6 +46,10 @@ def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str:
         str: the retrieved docs if hit, "" if not hit / no subject info / doesn't use datasource
     """
 
+    DS_RETRIEVAL_URL_PREFIX = os.getenv("DS_RETRIEVAL_URL_PREFIX")
+    if not DS_RETRIEVAL_URL_PREFIX:
+        raise Exception("DS retrieval URL Prefix not set.")
+
     info = db.get_subject_info_by_subject_name(subject)
 
     # check if the subject the user enrolled to has an entry in the DB, if not return ""
@@ -64,7 +69,7 @@ def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str:
     for i, result in enumerate(hits, start=1):
         res += f"<b>Result {i}:</b>"
         res += f"Content: {result['content']}"
-        res += f"File URL: {result['file_url']}"
+        res += f"File URL: {os.path.join(DS_RETRIEVAL_URL_PREFIX, result['file_url'])}"
         res += f"<i>Score: {result['score']} </i>"
         res += '<hr class="solid">'
 
