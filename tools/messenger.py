@@ -1,10 +1,10 @@
+import os
 import re
 
 from telegram import Update
 
 from datasources.faiss_ds import FAISSDS
 from db.db import db
-import os
 
 
 async def schola_reply(
@@ -29,7 +29,10 @@ async def schola_reply(
         # turn **text** markdowns into HTML format <b>text</b>, up to 60 chars
         message = re.sub(r"\*\*([^\*]{1,30}?)\*\*", r"<b>\1</b>", message)
 
-        # send text reply
+        # Regex to match Markdown links to replace with HTML
+        pattern = r"\[([^\]]+)\]\(([^)]+)\)"
+        message = re.sub(pattern, r'<a href="\2">\1</a>', message)
+
         await update.message.reply_text(
             message, reply_markup=reply_markup, parse_mode=parse_mode, *args, **kwargs
         )
@@ -66,11 +69,10 @@ def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str:
     faiss_ds = FAISSDS(index_name=subject)
     hits = faiss_ds.search_request(query, topk=topk)
     res = ""
-    for i, result in enumerate(hits, start=1):
-        res += f"<b>Result {i}:</b>"
-        res += f"Content: {result['content']}"
-        res += f"File URL: {DS_RETRIEVAL_URL_PREFIX}{result['file_url']}"
-        res += f"<i>Score: {result['score']} </i>"
-        res += '<hr class="solid">'
+    for _, result in enumerate(hits, start=1):
+        res += f"<b>File Name and URL:</b> {DS_RETRIEVAL_URL_PREFIX}{result['file_url']} \n"
+        res += f"<i>Score: {result['score']} </i>\n"
+        res += f"Content: {result['content']}\n"
+        res += '<hr class="solid">\n'
 
     return res
