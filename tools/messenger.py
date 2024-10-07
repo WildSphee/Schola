@@ -26,8 +26,8 @@ async def schola_reply(
         else:
             message = message.strip("`")
 
-        # turn **text** markdowns into HTML format <b>text</b>
-        message = re.sub(r"\*\*([^\*]{1,23}?)\*\*", r"<b>\1</b>", message)
+        # turn **text** markdowns into HTML format <b>text</b>, up to 60 chars
+        message = re.sub(r"\*\*([^\*]{1,30}?)\*\*", r"<b>\1</b>", message)
 
         # send text reply
         await update.message.reply_text(
@@ -69,7 +69,7 @@ def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str:
     for i, result in enumerate(hits, start=1):
         res += f"<b>Result {i}:</b>"
         res += f"Content: {result['content']}"
-        res += f"File URL: {os.path.join(DS_RETRIEVAL_URL_PREFIX, result['file_url'])}"
+        res += f"File URL: {DS_RETRIEVAL_URL_PREFIX}{result['file_url']}"
         res += f"<i>Score: {result['score']} </i>"
         res += '<hr class="solid">'
 

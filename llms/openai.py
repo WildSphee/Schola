@@ -19,7 +19,6 @@ def call_openai(
     Returns:
         str: The generated response from OpenAI.
     """
-
     messages = history + [
         {"role": "system", "content": query},
     ]

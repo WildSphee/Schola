@@ -87,7 +87,7 @@ class FAISSDS:
             parts = file_loc.split("/")
             ds_name = parts[0] if len(parts) > 0 else ""
             filename = parts[1] if len(parts) > 1 else ""
-            file_url = f"/datasource/{ds_name}/{filename}"
+            file_url = f"{ds_name}/{filename}"
 
             hit = {
                 "id": result["id"],
