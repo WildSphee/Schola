@@ -27,7 +27,7 @@ async def schola_reply(
             message = message.strip("`")
 
         # turn **text** markdowns into HTML format <b>text</b>, up to 60 chars
-        message = re.sub(r"\*\*([^\*]{1,30}?)\*\*", r"<b>\1</b>", message)
+        message = re.sub(r"\*\*([^\*]{1,60}?)\*\*", r"<b>\1</b>", message)
 
         # Regex to match Markdown links to replace with HTML
         pattern = r"\[([^\]]+)\]\(([^)]+)\)"

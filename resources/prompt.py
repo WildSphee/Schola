@@ -25,30 +25,26 @@ Ensure the JSON is properly formatted.
 qa_prompt_msg2 = """
 Here are some sources that may be relevant to the question below, quote these sources if necessary, if no sources provide then use your own knowledge. 
 Sources:
+```
 {sources}
-
-Example HTML formatting options:
-<b>bold</b>, <strong>bold</strong>
-<i>italic</i>, <em>italic</em>
-<u>underline</u>, <ins>underline</ins>
-<s>strikethrough</s>, <strike>strikethrough</strike>, <del>strikethrough</del>
-<span class="tg-spoiler">spoiler</span>, <tg-spoiler>spoiler</tg-spoiler>
-<b>bold <i>italic bold <s>italic bold strikethrough <span class="tg-spoiler">italic bold strikethrough spoiler</span></s> <u>underline italic bold</u></i> bold</b>
-<a href="http://www.example.com/">inline URL</a>
-<a href="tg://user?id=123456789">inline mention of a user</a>
-<tg-emoji emoji-id="5368324170671202286">👍</tg-emoji>
-<code>inline fixed-width code</code>
-<pre>pre-formatted fixed-width code block</pre>
-<pre><code class="language-python">pre-formatted fixed-width code block written in the Python programming language</code></pre>
-<blockquote>Block quotation started\nBlock quotation continued\nThe last line of the block quotation</blockquote>
-<blockquote expandable>Expandable block quotation started\nExpandable block quotation continued\nExpandable block quotation continued\nHidden by default part of the block quotation started\nExpandable block quotation continued\nThe last line of the block quotation</blockquote>
-
-
-
+```
 You are answering questions about the subject(s) of {subject}. Answer professionally and concisely. User may contain Typos and acronyms, try your best to give guidance for the users questions and answer with explanations.
-ALWAYS answer with HTML formatting, you CANNOT provide tables and CANNOT provide MARKDOWNs.
+answer with MARKDOWNs, and ALWAYS provide associate link from the sources, never provide tables and code blocks.
+
+```Example:
+User question:
+What is the PM life cycle?
+Answer:
+
+Project management life cycles can vary across industries and project types, and variations such as iterative or agile approaches might be utilized depending on project needs.
+
+The life cycle serves as a framework that guides project teams to systematically achieve project deliverables.
+
+For further detailed insight, you can refer to the [PMBOK Guide](http://23.98.93.88:8081/view-pdf/datasources/Project%20Management/A_Guide_to_the_Project_Management_Body_of_Knowledge_PMBOK_Project_Management_Institute_7_2021_Project_Management_Institute.pdf#page=318), which provides an extensive overview of project management practices.
+```
 
 User question:
+```
 {query}
-
+```
 """
