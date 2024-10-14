@@ -18,7 +18,8 @@ TOKEN = os.getenv("TELEGRAM_EXAM_BOT_TOKEN")
 
 
 def main():
-    """Start the bot."""
+    """Start the bot. Main entry point when running sh scripts/start.sh"""
+
     if TOKEN is None:
         print(
             "No token found. Please set TELEGRAM_EXAM_BOT_TOKEN in your environment variables."

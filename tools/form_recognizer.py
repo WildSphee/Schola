@@ -5,7 +5,11 @@ from azure.core.credentials import AzureKeyCredential
 
 
 def get_doc_analysis_client() -> DocumentAnalysisClient:
-    """Create an document analysis Client instance"""
+    """Check credentials existed in .env, returns a document analysis client instance
+
+    Return:
+        DocumentAnalysisClient: created after processing credentials
+    """
 
     AZURE_FORM_RECOGNIZER_ENDPOINT = os.getenv("AZURE_FORM_RECOGNIZER_ENDPOINT")
     AZURE_FORM_RECOGNIZER_KEY = os.getenv("AZURE_FORM_RECOGNIZER_KEY")

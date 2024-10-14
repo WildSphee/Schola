@@ -50,6 +50,11 @@ async def schola_reply(
 def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str:
     """search if given subject has a datasource, and return formatting search results
 
+    Attribute:
+        query (str): the str input to be embedded and searched
+        subject (str): the subject name (not subject code) user is current asking from
+        topk (int): the amount of retrieved results to be returned, default is 5
+
     Return:
         str: the retrieved docs if hit, "" if not hit / no subject info / doesn't use datasource
     """

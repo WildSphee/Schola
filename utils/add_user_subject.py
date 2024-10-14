@@ -4,7 +4,15 @@ from db.db import db
 
 
 def set_user_subjects(user_id: str, package: Literal["default"] = "default"):
-    defaults = [
+    """
+    Running this script will enroll the user to a the default subject package
+
+    Attribute:
+        user_id (str): the id of the user
+        package (Literal["default"]): the package of lessons the user to be enrolled to, default is "default"
+    """
+
+    default_package = [
         (
             "Project Management",
             "learn about being a good PM, agile, waterfall & hybrid",
@@ -34,16 +42,10 @@ def set_user_subjects(user_id: str, package: Literal["default"] = "default"):
 
     # set subject package
     if package == "default":
-        for subject in defaults:
+        for subject in default_package:
             if subject[0] not in [r["subject_name"] for r in res]:
                 db.add_subject_info(*subject)
 
             db.add_user_subject(user_id=user_id, subject=subject[0])
 
     return db.get_all_subjects_info()
-
-
-if __name__ == "__main__":
-    user_id = 1624490023
-    res = set_user_subjects(user_id)
-    print("Subject List: ", res)

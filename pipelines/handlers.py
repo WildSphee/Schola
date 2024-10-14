@@ -5,7 +5,6 @@ from telegram.ext import (
     ContextTypes,
 )
 
-from add_user_subject import set_user_subjects
 from db.db import db
 from pipelines.config_pipeline import handle_configuration_pipeline
 from pipelines.default_pipeline import handle_default_pipeline
@@ -17,6 +16,7 @@ from pipelines.qa_pipeline import (
 from pipelines.quiz_pipeline import handle_quiz_pipeline
 from pipelines.subject_select_pipeline import handle_subject_select_pipeline
 from resources.languages import en as lang
+from utils.add_user_subject import set_user_subjects
 from utils.const import (
     CONFIG_PIPELINE,
     DEFAULT_PIPELINE,
