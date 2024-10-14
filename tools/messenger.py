@@ -27,6 +27,10 @@ async def schola_reply(
         else:
             message = message.strip("`")
 
+        # Convert headers to <b>text</b>, considering line breaks
+        message = re.sub(
+            r"^(#{1,3}) (.{1,60})(?=\n|$)", r"<b>\2</b>", message, flags=re.MULTILINE
+        )
         # turn **text** markdowns into HTML format <b>text</b>, up to 60 chars
         message = re.sub(r"\*\*([^\*]{1,60}?)\*\*", r"<b>\1</b>", message)
 
