@@ -1,4 +1,5 @@
 from datasources.faiss_ds import FAISSDS
+from utils.formatter import subject_code_from_subject_name
 
 
 def search_datasource(datasource_name, query, top_k=5):
@@ -28,6 +29,8 @@ if __name__ == "__main__":
     top_k = 5  # Number of top results to retrieve
 
     print("Performing search...")
+    # format the datasource_name into subject code
+    datasource_name = subject_code_from_subject_name(datasource_name)
     search_results = search_datasource(datasource_name, query, top_k)
 
     # Print search results

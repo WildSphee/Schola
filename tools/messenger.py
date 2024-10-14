@@ -5,6 +5,7 @@ from telegram import Update
 
 from datasources.faiss_ds import FAISSDS
 from db.db import db
+from utils.formatter import subject_code_from_subject_name
 
 
 async def schola_reply(
@@ -65,6 +66,8 @@ def retrieve_from_subject(query: str, subject: str, topk: int = 5) -> str:
     if not ds:
         return ""
 
+    # format the subject into subject code
+    subject = subject_code_from_subject_name(subject)
     # perform a search on its datasource, and return the search results.
     faiss_ds = FAISSDS(index_name=subject)
     hits = faiss_ds.search_request(query, topk=topk)
