@@ -110,7 +110,7 @@ async def qa_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     photo = update.message.photo[-1]  # Get the highest resolution photo
 
-    await update.message.chat.send_action(action=ChatAction.UPLOAD_VIDEO)
+    await update.message.chat.send_action(action=ChatAction.UPLOAD_PHOTO)
 
     try:
         # processing the file
@@ -141,7 +141,7 @@ async def qa_voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file = await voice.get_file()
     file_path = tempfile.mktemp(suffix=".ogg")
 
-    await update.message.chat.send_action(action=ChatAction.RECORD_VOICE)
+    await update.message.chat.send_action(action=ChatAction.UPLOAD_VOICE)
 
     try:
         await file.download_to_drive(file_path)
